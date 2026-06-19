@@ -16,6 +16,8 @@ from app.analysis.models.emotional_analysis import (
     EmotionalAnalysis
 )
 
+from datetime import datetime, timedelta
+
 
 def get_weekly_summary(
     current_user_id: int,
@@ -36,6 +38,11 @@ def get_weekly_summary(
             detail="No tienes perfil de paciente"
         )
 
+    week_ago = (
+        datetime.utcnow()
+        - timedelta(days=7)
+    )
+
     analyses = (
         db.query(EmotionalAnalysis)
         .join(
@@ -45,14 +52,20 @@ def get_weekly_summary(
         .filter(
             EmotionalEntry.patient_id == patient.id
         )
+        .filter(
+            EmotionalAnalysis.analyzed_at >= week_ago
+        )
         .all()
     )
-
+    
     if not analyses:
         return {
             "entries_count": 0,
             "dominant_emotion": None,
+            "latest_emotion": None,
+            "average_intensity": None,
             "risk_level": None,
+            "trend": "SIN_DATOS",
             "recommendation": (
                 "Todavía no existen análisis emocionales."
             )
@@ -79,11 +92,73 @@ def get_weekly_summary(
         Counter(risks)
         .most_common(1)[0][0]
     )
+    
+    intensities = [
+        analysis.emotion_intensity
+        for analysis in analyses
+        if analysis.emotion_intensity
+    ]
+
+    average_intensity = None
+
+    if intensities:
+
+        intensity_values = {
+            "Baja": 1,
+            "Media": 2,
+            "Alta": 3
+        }
+
+        reverse_values = {
+            1: "Baja",
+            2: "Media",
+            3: "Alta"
+        }
+
+        total = sum(
+            intensity_values[i]
+            for i in intensities
+        )
+
+        average = round(
+            total / len(intensities)
+        )
+
+        average_intensity = (
+            reverse_values[average]
+        )
+
+    latest_analysis = sorted(
+        analyses,
+        key=lambda x: x.analyzed_at,
+        reverse=True
+    )[0]
+
+    latest_emotion = (
+        latest_analysis.primary_emotion
+    )
+
+    trend = "ESTABLE"
+
+    if latest_emotion in [
+        "Ansiedad",
+        "Tristeza",
+        "Miedo",
+        "Estrés"
+    ]:
+        trend = "ATENCION"
+
+    if latest_emotion == "Calma":
+        trend = "MEJORA"
 
     return {
         "entries_count": len(analyses),
         "dominant_emotion": dominant_emotion,
+        "latest_emotion": latest_emotion,
         "risk_level": risk_level,
+        "trend": trend,
+        "average_intensity": average_intensity,
         "recommendation":
             f"Tu emoción predominante fue {dominant_emotion}. Continúa registrando tus emociones para identificar patrones."
     }
+    

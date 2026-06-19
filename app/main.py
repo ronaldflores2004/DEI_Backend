@@ -26,6 +26,44 @@ from app.therapy.routers.consent_router import (
     router as consent_router
 )
 
+from app.entries.models.emotional_entry import EmotionalEntry
+
+from app.entries.routers.emotional_entry_router import (
+    router as emotional_entry_router
+)
+
+from app.entries.routers.audio_router import (
+    router as audio_router
+)
+
+from app.analysis.models.audio_transcription import (
+    AudioTranscription
+)
+
+from app.analysis.routers.transcription_router import (
+    router as transcription_router
+)
+from app.analysis.models.emotional_analysis import (
+    EmotionalAnalysis
+)
+from app.analysis.routers.gemini_router import (
+    router as gemini_router
+)
+from app.analysis.models.emotional_analysis import (
+    EmotionalAnalysis
+)
+from app.analysis.routers.emotional_analysis_router import (
+    router as emotional_analysis_router
+)
+
+from app.recommendations.models.patient_recommendation import (
+    PatientRecommendation
+)
+
+from app.recommendations.routers.patient_recommendation_router import (
+    router as patient_recommendation_router
+)
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -38,6 +76,14 @@ app.include_router(patient_router)
 app.include_router(professional_router)
 app.include_router(link_request_router)
 app.include_router(consent_router)
+app.include_router(emotional_entry_router)
+app.include_router(audio_router)
+app.include_router(transcription_router)
+app.include_router(gemini_router)
+app.include_router(emotional_analysis_router)
+app.include_router(
+    patient_recommendation_router
+)
 @app.get("/")
 def root():
     return {

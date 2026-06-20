@@ -68,6 +68,14 @@ from app.dashboard.routers.dashboard_router import (
     router as dashboard_router
 )
 
+from app.therapy_insights.routers.therapy_insight_router import (
+    router as therapy_insight_router
+)
+
+from app.risk_alerts.routers.risk_alert_router import (
+    router as risk_alert_router
+)
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -89,6 +97,14 @@ app.include_router(
     patient_recommendation_router
 )
 app.include_router(dashboard_router)
+app.include_router(
+    therapy_insight_router
+)
+
+app.include_router(
+    risk_alert_router
+)
+
 @app.get("/")
 def root():
     return {

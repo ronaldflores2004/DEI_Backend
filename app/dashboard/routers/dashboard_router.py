@@ -12,8 +12,16 @@ from app.dashboard.schemas.patient_dashboard_response import (
     PatientDashboardResponse
 )
 
+from app.dashboard.schemas.professional_dashboard_response import (
+    ProfessionalDashboardResponse
+)
+
 from app.dashboard.services.patient_dashboard_service import (
     get_patient_dashboard
+)
+
+from app.dashboard.services.professional_dashboard_service import (
+    get_professional_dashboard
 )
 
 router = APIRouter(
@@ -32,6 +40,20 @@ def patient_dashboard(
 ):
 
     return get_patient_dashboard(
+        current_user.id,
+        db
+    )
+    
+@router.get(
+    "/professional",
+    response_model=ProfessionalDashboardResponse
+)
+def professional_dashboard(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    return get_professional_dashboard(
         current_user.id,
         db
     )

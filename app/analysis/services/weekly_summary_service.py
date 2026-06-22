@@ -115,10 +115,29 @@ def get_weekly_summary(
             3: "Alta"
         }
 
-        total = sum(
-            intensity_values[i]
+        valid_intensities = [
+            i
             for i in intensities
-        )
+            if i in intensity_values
+        ]
+
+
+        if valid_intensities:
+
+            total = sum(
+                intensity_values[i]
+                for i in valid_intensities
+            )
+
+            average = (
+                total /
+                len(valid_intensities)
+            )
+
+        else:
+
+            average = 1
+
 
         average = round(
             total / len(intensities)

@@ -26,6 +26,10 @@ from app.analysis.models.audio_transcription import (
     AudioTranscription
 )
 
+from app.analysis.services.gemini_analysis_service import (
+    analyze_text_with_gemini
+)
+
 def create_analysis(
     entry_id: int,
     current_user_id: int,
@@ -243,9 +247,22 @@ def create_analysis_from_entry(
     if existing:
         return existing
 
-    result = analyze_text(
-        text_to_analyze
-    )
+    try:
+
+        result = (
+            analyze_text_with_gemini(
+                text_to_analyze
+            )
+        )
+
+    except Exception as e:
+
+        print("ERROR GEMINI:")
+        print(e)
+
+        result = analyze_text(
+            text_to_analyze
+        )
 
     analysis = EmotionalAnalysis(
         entry_id=entry.id,

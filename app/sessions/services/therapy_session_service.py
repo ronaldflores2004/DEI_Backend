@@ -18,6 +18,9 @@ from app.sessions.models.therapy_session import (
     TherapySession
 )
 
+from app.notifications.models.notification import (
+    Notification
+)
 
 def create_session(
     current_user_id: int,
@@ -82,12 +85,24 @@ def create_session(
 
     db.add(session)
 
+    notification = Notification(
+        user_id=patient.user_id,
+        title="Nueva sesión programada",
+        message=(
+            f"Tienes una sesión terapéutica "
+            f"programada para "
+            f"{data.session_date}"
+        ),
+        type="SESSION"
+    )
+
+    db.add(notification)
+
     db.commit()
 
     db.refresh(session)
 
     return session
-
 
 def get_sessions(
     current_user_id: int,

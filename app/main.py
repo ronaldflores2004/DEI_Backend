@@ -92,6 +92,14 @@ from app.sessions.routers.clinical_note_router import (
     router as clinical_note_router
 )
 
+from app.notifications.models.notification import (
+    Notification
+)
+
+from app.notifications.routers.notification_router import (
+    router as notification_router
+)
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -125,6 +133,10 @@ app.include_router(
 )
 app.include_router(
     clinical_note_router
+)
+
+app.include_router(
+    notification_router
 )
 
 @app.get("/")

@@ -76,6 +76,22 @@ from app.risk_alerts.routers.risk_alert_router import (
     router as risk_alert_router
 )
 
+from app.sessions.models.therapy_session import (
+    TherapySession
+)
+
+from app.sessions.routers.therapy_session_router import (
+    router as therapy_session_router
+)
+
+from app.sessions.models.clinical_note import (
+    ClinicalNote
+)
+
+from app.sessions.routers.clinical_note_router import (
+    router as clinical_note_router
+)
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -103,6 +119,12 @@ app.include_router(
 
 app.include_router(
     risk_alert_router
+)
+app.include_router(
+    therapy_session_router
+)
+app.include_router(
+    clinical_note_router
 )
 
 @app.get("/")

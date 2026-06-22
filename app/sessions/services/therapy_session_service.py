@@ -119,3 +119,128 @@ def get_sessions(
     )
 
     return sessions
+
+def complete_session(
+    session_id: int,
+    current_user_id: int,
+    db: Session
+):
+
+    professional = (
+        db.query(ProfessionalProfile)
+        .filter(
+            ProfessionalProfile.user_id
+            == current_user_id
+        )
+        .first()
+    )
+
+    if not professional:
+        raise HTTPException(
+            status_code=403,
+            detail="No tienes perfil profesional"
+        )
+
+    session = (
+        db.query(TherapySession)
+        .filter(
+            TherapySession.id
+            == session_id
+        )
+        .first()
+    )
+
+    if not session:
+        raise HTTPException(
+            status_code=404,
+            detail="Sesión no encontrada"
+        )
+
+    if session.professional_id != professional.id:
+        raise HTTPException(
+            status_code=403,
+            detail="No tienes acceso a esta sesión"
+        )
+
+    if session.status == "COMPLETED":
+        raise HTTPException(
+            status_code=400,
+            detail="La sesión ya fue completada"
+        )
+
+    if session.status == "CANCELLED":
+        raise HTTPException(
+            status_code=400,
+            detail="La sesión fue cancelada"
+        )
+
+    session.status = "COMPLETED"
+
+    db.commit()
+
+    db.refresh(session)
+
+    return session
+
+
+def cancel_session(
+    session_id: int,
+    current_user_id: int,
+    db: Session
+):
+
+    professional = (
+        db.query(ProfessionalProfile)
+        .filter(
+            ProfessionalProfile.user_id
+            == current_user_id
+        )
+        .first()
+    )
+
+    if not professional:
+        raise HTTPException(
+            status_code=403,
+            detail="No tienes perfil profesional"
+        )
+
+    session = (
+        db.query(TherapySession)
+        .filter(
+            TherapySession.id
+            == session_id
+        )
+        .first()
+    )
+
+    if not session:
+        raise HTTPException(
+            status_code=404,
+            detail="Sesión no encontrada"
+        )
+
+    if session.professional_id != professional.id:
+        raise HTTPException(
+            status_code=403,
+            detail="No tienes acceso a esta sesión"
+        )
+
+    if session.status == "CANCELLED":
+        raise HTTPException(
+            status_code=400,
+            detail="La sesión ya fue cancelada"
+        )
+
+    if session.status == "COMPLETED":
+        raise HTTPException(
+            status_code=400,
+            detail="La sesión ya fue completada"
+        )
+
+    session.status = "CANCELLED"
+
+    db.commit()
+
+    db.refresh(session)
+
+    return session

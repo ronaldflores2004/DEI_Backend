@@ -21,6 +21,15 @@ from app.sessions.services.therapy_session_service import (
     get_sessions
 )
 
+from app.sessions.schemas.session_status_response import (
+    SessionStatusResponse
+)
+
+from app.sessions.services.therapy_session_service import (
+    complete_session,
+    cancel_session
+)
+
 router = APIRouter(
     prefix="/sessions",
     tags=["Therapy Sessions"]
@@ -54,6 +63,39 @@ def list_sessions(
 ):
 
     return get_sessions(
+        current_user.id,
+        db
+    )
+    
+@router.patch(
+    "/{session_id}/complete",
+    response_model=SessionStatusResponse
+)
+def complete_therapy_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    return complete_session(
+        session_id,
+        current_user.id,
+        db
+    )
+
+
+@router.patch(
+    "/{session_id}/cancel",
+    response_model=SessionStatusResponse
+)
+def cancel_therapy_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    return cancel_session(
+        session_id,
         current_user.id,
         db
     )

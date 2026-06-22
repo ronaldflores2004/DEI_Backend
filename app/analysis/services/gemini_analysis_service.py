@@ -12,8 +12,9 @@ client = genai.Client(
 )
 
 
-def analyze_text_with_gemini(
-    text: str
+def call_model(
+    text: str,
+    model: str
 ):
 
     prompt = f"""
@@ -50,7 +51,7 @@ def analyze_text_with_gemini(
         "risk_level": "",
         "analysis_json": {{
             "provider": "GEMINI",
-            "model": "gemini-2.5-flash",
+            "model": "{model}",
             "sentiment": "",
             "topics": [],
             "triggers": []
@@ -63,7 +64,7 @@ def analyze_text_with_gemini(
     """
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model=model,
         contents=prompt
     )
 
@@ -74,6 +75,29 @@ def analyze_text_with_gemini(
         .strip()
     )
 
-    return json.loads(
+    result = json.loads(
         clean_response
     )
+
+    result["analysis_json"]["model"] = model
+
+    return result
+
+
+def analyze_text_with_gemini(
+    text: str
+):
+
+    try:
+
+        return call_model(
+            text,
+            "gemini-2.5-flash"
+        )
+
+    except Exception:
+
+        return call_model(
+            text,
+            "gemini-2.5-flash-lite"
+        )

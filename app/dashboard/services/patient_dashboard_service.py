@@ -63,11 +63,28 @@ def get_patient_dashboard(
     )
 
     return {
-        "entries_count": entries_count,
-        "dominant_emotion": weekly["dominant_emotion"],
-        "latest_emotion": weekly["latest_emotion"],
-        "average_intensity": weekly["average_intensity"],
-        "trend": weekly["trend"],
+
+        "entries_count":
+            entries_count,
+
+        "dominant_emotion":
+            weekly["dominant_emotion"],
+
+        "latest_emotion":
+            weekly["latest_emotion"],
+
+        "average_intensity":
+            weekly["average_intensity"],
+
+        "risk_level":
+            weekly["risk_level"],
+
+        "trend":
+            weekly["trend"],
+
+        "ai_summary":
+            weekly["ai_summary"],
+
         "latest_recommendation":
             latest_recommendation.content
             if latest_recommendation

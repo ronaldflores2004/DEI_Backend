@@ -11,6 +11,10 @@ class PatientDashboardResponse(BaseModel):
 
     average_intensity: str | None
 
+    risk_level: str | None
+
     trend: str
+
+    ai_summary: str | None
 
     latest_recommendation: str | None

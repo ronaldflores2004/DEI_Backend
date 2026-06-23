@@ -46,9 +46,6 @@ from app.analysis.routers.transcription_router import (
 from app.analysis.models.emotional_analysis import (
     EmotionalAnalysis
 )
-from app.analysis.routers.gemini_router import (
-    router as gemini_router
-)
 from app.analysis.models.emotional_analysis import (
     EmotionalAnalysis
 )
@@ -115,7 +112,7 @@ app.include_router(consent_router)
 app.include_router(emotional_entry_router)
 app.include_router(audio_router)
 app.include_router(transcription_router)
-app.include_router(gemini_router)
+
 app.include_router(emotional_analysis_router)
 app.include_router(
     patient_recommendation_router

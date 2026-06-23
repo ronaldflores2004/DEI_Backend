@@ -2,6 +2,7 @@ from collections import Counter
 
 from sqlalchemy.orm import Session
 
+
 from app.entries.models.emotional_entry import (
     EmotionalEntry
 )
@@ -22,20 +23,27 @@ def generate_insights(
         db.query(EmotionalAnalysis)
         .join(
             EmotionalEntry,
-            EmotionalAnalysis.entry_id == EmotionalEntry.id
+            EmotionalAnalysis.entry_id
+            ==
+            EmotionalEntry.id
         )
         .filter(
-            EmotionalEntry.patient_id == patient_id
+            EmotionalEntry.patient_id
+            ==
+            patient_id
         )
         .all()
     )
 
+
     if not analyses:
+
         return insights
 
-    # -------------------------
-    # Emociones
-    # -------------------------
+
+    # ===============================
+    # EMOCIONES DOMINANTES
+    # ===============================
 
     emotions = [
         analysis.primary_emotion
@@ -43,68 +51,87 @@ def generate_insights(
         if analysis.primary_emotion
     ]
 
-    emotion_count = Counter(
+
+    emotion_counter = Counter(
         emotions
     )
 
-    if emotion_count:
+    negative_emotions = [
+        "Tristeza",
+        "Ansiedad",
+        "Miedo",
+        "Estrés",
+        "Soledad",
+        "Frustración",
+        "Preocupación",
+        "Culpa",
+        "Desesperanza",
+        "Agotamiento"
+    ]
 
-        dominant_emotion = (
-            emotion_count
-            .most_common(1)[0][0]
-        )
+    for emotion, count in (
+        emotion_counter
+        .most_common(3)
+    ):
 
-        if dominant_emotion in [
-            "Tristeza",
-            "Ansiedad",
-            "Miedo",
-            "Estrés"
-        ]:
+        if (
+            count >= 3
+            and emotion in negative_emotions
+        ):
 
             insights.append({
+
                 "title":
-                    "Persistencia emocional negativa",
+                    "Patrón emocional recurrente",
 
                 "content":
                     (
-                        f"La emoción predominante "
-                        f"es {dominant_emotion}."
+                        f"{emotion} aparece "
+                        f"{count} veces en los análisis."
                     ),
 
                 "priority":
                     "HIGH"
             })
 
-    # -------------------------
-    # Topics
-    # -------------------------
+
+    # ===============================
+    # TOPICS GEMINI
+    # ===============================
 
     topics = []
 
+
     for analysis in analyses:
 
-        analysis_json = (
-            analysis.analysis_json or {}
+        data = (
+            analysis.analysis_json
+            or {}
         )
 
+
         topics.extend(
-            analysis_json.get(
+            data.get(
                 "topics",
                 []
             )
         )
 
-    topic_count = Counter(
+
+    topic_counter = Counter(
         topics
     )
 
+
     for topic, count in (
-        topic_count.most_common(3)
+        topic_counter
+        .most_common(5)
     ):
 
         if count >= 2:
 
             insights.append({
+
                 "title":
                     "Tema recurrente",
 
@@ -112,45 +139,51 @@ def generate_insights(
                     (
                         f"{topic} aparece "
                         f"{count} veces "
-                        f"en los registros."
+                        "en los análisis."
                     ),
 
                 "priority":
-                    "HIGH"
-                    if count >= 3
-                    else "MEDIUM"
+                    "MEDIUM"
             })
 
-    # -------------------------
-    # Triggers
-    # -------------------------
+
+    # ===============================
+    # TRIGGERS GEMINI
+    # ===============================
 
     triggers = []
 
+
     for analysis in analyses:
 
-        analysis_json = (
-            analysis.analysis_json or {}
+        data = (
+            analysis.analysis_json
+            or {}
         )
 
+
         triggers.extend(
-            analysis_json.get(
+            data.get(
                 "triggers",
                 []
             )
         )
 
-    trigger_count = Counter(
+
+    trigger_counter = Counter(
         triggers
     )
 
+
     for trigger, count in (
-        trigger_count.most_common(3)
+        trigger_counter
+        .most_common(5)
     ):
 
         if count >= 2:
 
             insights.append({
+
                 "title":
                     "Desencadenante frecuente",
 
@@ -158,13 +191,12 @@ def generate_insights(
                     (
                         f"{trigger} aparece "
                         f"{count} veces "
-                        f"en los análisis."
+                        "como posible detonante."
                     ),
 
                 "priority":
                     "HIGH"
-                    if count >= 3
-                    else "MEDIUM"
             })
+
 
     return insights

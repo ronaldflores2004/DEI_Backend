@@ -16,6 +16,10 @@ from app.analysis.models.emotional_analysis import (
     EmotionalAnalysis
 )
 
+from app.analysis.services.weekly_summary_ai_service import (
+    generate_ai_summary
+)
+
 from datetime import datetime, timedelta
 
 
@@ -47,18 +51,22 @@ def get_weekly_summary(
         db.query(EmotionalAnalysis)
         .join(
             EmotionalEntry,
-            EmotionalAnalysis.entry_id == EmotionalEntry.id
+            EmotionalAnalysis.entry_id
+            == EmotionalEntry.id
         )
         .filter(
-            EmotionalEntry.patient_id == patient.id
+            EmotionalEntry.patient_id
+            == patient.id
         )
         .filter(
-            EmotionalAnalysis.analyzed_at >= week_ago
+            EmotionalAnalysis.analyzed_at
+            >= week_ago
         )
         .all()
     )
-    
+
     if not analyses:
+
         return {
             "entries_count": 0,
             "dominant_emotion": None,
@@ -66,6 +74,7 @@ def get_weekly_summary(
             "average_intensity": None,
             "risk_level": None,
             "trend": "SIN_DATOS",
+            "ai_summary": None,
             "recommendation": (
                 "Todavía no existen análisis emocionales."
             )
@@ -92,7 +101,7 @@ def get_weekly_summary(
         Counter(risks)
         .most_common(1)[0][0]
     )
-    
+
     intensities = [
         analysis.emotion_intensity
         for analysis in analyses
@@ -101,57 +110,49 @@ def get_weekly_summary(
 
     average_intensity = None
 
-    if intensities:
+    intensity_values = {
+        "Baja": 1,
+        "Media": 2,
+        "Alta": 3
+    }
 
-        intensity_values = {
-            "Baja": 1,
-            "Media": 2,
-            "Alta": 3
-        }
+    reverse_values = {
+        1: "Baja",
+        2: "Media",
+        3: "Alta"
+    }
 
-        reverse_values = {
-            1: "Baja",
-            2: "Media",
-            3: "Alta"
-        }
+    valid_intensities = [
+        intensity
+        for intensity in intensities
+        if intensity in intensity_values
+    ]
 
-        valid_intensities = [
-            i
-            for i in intensities
-            if i in intensity_values
-        ]
+    if valid_intensities:
 
-
-        if valid_intensities:
-
-            total = sum(
-                intensity_values[i]
-                for i in valid_intensities
-            )
-
-            average = (
-                total /
-                len(valid_intensities)
-            )
-
-        else:
-
-            average = 1
-
+        total = sum(
+            intensity_values[intensity]
+            for intensity in valid_intensities
+        )
 
         average = round(
-            total / len(intensities)
+            total /
+            len(valid_intensities)
         )
 
         average_intensity = (
             reverse_values[average]
         )
 
-    latest_analysis = sorted(
+    else:
+
+        average_intensity = "Baja"
+
+    latest_analysis = max(
         analyses,
-        key=lambda x: x.analyzed_at,
-        reverse=True
-    )[0]
+        key=lambda analysis:
+            analysis.analyzed_at
+    )
 
     latest_emotion = (
         latest_analysis.primary_emotion
@@ -163,21 +164,95 @@ def get_weekly_summary(
         "Ansiedad",
         "Tristeza",
         "Miedo",
-        "Estrés"
+        "Estrés",
+        "Soledad",
+        "Frustración",
+        "Preocupación"
     ]:
         trend = "ATENCION"
 
-    if latest_emotion == "Calma":
+    elif latest_emotion in [
+        "Calma",
+        "Alegría",
+        "Gratitud"
+    ]:
         trend = "MEJORA"
 
+    topics = []
+
+    triggers = []
+
+    for analysis in analyses:
+
+        data = (
+            analysis.analysis_json
+            or {}
+        )
+
+        topics.extend(
+            data.get(
+                "topics",
+                []
+            )
+        )
+
+        triggers.extend(
+            data.get(
+                "triggers",
+                []
+            )
+        )
+
+    try:
+
+        ai_summary = (
+            generate_ai_summary(
+                dominant_emotion,
+                latest_emotion,
+                risk_level,
+                topics,
+                triggers
+            )
+        )
+
+    except Exception:
+
+        ai_summary = (
+            f"Durante esta semana predominó "
+            f"{dominant_emotion}. "
+            f"Tu emoción más reciente fue "
+            f"{latest_emotion}."
+        )
+
+
     return {
-        "entries_count": len(analyses),
-        "dominant_emotion": dominant_emotion,
-        "latest_emotion": latest_emotion,
-        "risk_level": risk_level,
-        "trend": trend,
-        "average_intensity": average_intensity,
+
+        "entries_count":
+            len(analyses),
+
+        "dominant_emotion":
+            dominant_emotion,
+
+        "latest_emotion":
+            latest_emotion,
+
+        "risk_level":
+            risk_level,
+
+        "trend":
+            trend,
+
+        "average_intensity":
+            average_intensity,
+
+        "ai_summary":
+            ai_summary,
+
         "recommendation":
-            f"Tu emoción predominante fue {dominant_emotion}. Continúa registrando tus emociones para identificar patrones."
+            (
+                f"Tu emoción predominante fue "
+                f"{dominant_emotion}. "
+                f"Continúa registrando tus emociones "
+                f"para identificar patrones."
+            )
     }
-    

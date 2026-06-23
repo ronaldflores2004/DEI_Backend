@@ -8,11 +8,13 @@ class WeeklySummaryResponse(BaseModel):
     dominant_emotion: str | None
 
     latest_emotion: str | None
-    
+
     average_intensity: str | None
 
     risk_level: str | None
 
     trend: str
+
+    ai_summary: str | None
 
     recommendation: str

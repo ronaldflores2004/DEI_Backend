@@ -4,9 +4,14 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
 
-from app.identity.models.user import User
+from app.core.dependencies import (
+    get_current_patient_profile
+)
+
+from app.identity.models.patient_profile import (
+    PatientProfile
+)
 
 from app.recommendations.schemas.patient_recommendation_create import (
     PatientRecommendationCreate
@@ -31,6 +36,10 @@ router = APIRouter(
 )
 
 
+# =====================================
+# Crear recomendación manual
+# =====================================
+
 @router.post(
     "",
     response_model=PatientRecommendationResponse
@@ -38,15 +47,21 @@ router = APIRouter(
 def create(
     data: PatientRecommendationCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    patient: PatientProfile = Depends(
+        get_current_patient_profile
+    )
 ):
 
     return create_recommendation(
-        current_user.id,
-        data,
-        db
+        patient=patient,
+        data=data,
+        db=db
     )
 
+
+# =====================================
+# Listar recomendaciones del paciente
+# =====================================
 
 @router.get(
     "",
@@ -54,14 +69,21 @@ def create(
 )
 def list_my(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    patient: PatientProfile = Depends(
+        get_current_patient_profile
+    )
 ):
 
     return get_my_recommendations(
-        current_user.id,
-        db
+        patient=patient,
+        db=db
     )
-    
+
+
+# =====================================
+# Generar recomendación desde análisis
+# =====================================
+
 @router.post(
     "/generate/{analysis_id}",
     response_model=PatientRecommendationResponse
@@ -69,10 +91,13 @@ def list_my(
 def generate(
     analysis_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    patient: PatientProfile = Depends(
+        get_current_patient_profile
+    )
 ):
 
     return generate_from_analysis(
-        analysis_id,
-        db
+        analysis_id=analysis_id,
+        patient=patient,
+        db=db
     )

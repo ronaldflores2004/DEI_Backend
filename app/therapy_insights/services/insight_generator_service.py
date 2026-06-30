@@ -2,7 +2,6 @@ from collections import Counter
 
 from sqlalchemy.orm import Session
 
-
 from app.entries.models.emotional_entry import (
     EmotionalEntry
 )
@@ -17,40 +16,38 @@ def generate_insights(
     db: Session
 ):
 
-    insights = []
+    # =====================================
+    # OBTENER ANÁLISIS DEL PACIENTE
+    # =====================================
 
     analyses = (
         db.query(EmotionalAnalysis)
         .join(
             EmotionalEntry,
             EmotionalAnalysis.entry_id
-            ==
-            EmotionalEntry.id
+            == EmotionalEntry.id
         )
         .filter(
             EmotionalEntry.patient_id
-            ==
-            patient_id
+            == patient_id
         )
         .all()
     )
 
+    insights = []
 
     if not analyses:
-
         return insights
 
-
-    # ===============================
+    # =====================================
     # EMOCIONES DOMINANTES
-    # ===============================
+    # =====================================
 
     emotions = [
         analysis.primary_emotion
         for analysis in analyses
         if analysis.primary_emotion
     ]
-
 
     emotion_counter = Counter(
         emotions
@@ -70,8 +67,7 @@ def generate_insights(
     ]
 
     for emotion, count in (
-        emotion_counter
-        .most_common(3)
+        emotion_counter.most_common(3)
     ):
 
         if (
@@ -94,38 +90,45 @@ def generate_insights(
                     "HIGH"
             })
 
-
-    # ===============================
-    # TOPICS GEMINI
-    # ===============================
+    # =====================================
+    # TOPICS Y TRIGGERS
+    # =====================================
 
     topics = []
 
+    triggers = []
 
     for analysis in analyses:
 
-        data = (
+        analysis_data = (
             analysis.analysis_json
             or {}
         )
 
-
         topics.extend(
-            data.get(
+            analysis_data.get(
                 "topics",
                 []
             )
         )
 
+        triggers.extend(
+            analysis_data.get(
+                "triggers",
+                []
+            )
+        )
+
+    # =====================================
+    # TEMAS RECURRENTES
+    # =====================================
 
     topic_counter = Counter(
         topics
     )
 
-
     for topic, count in (
-        topic_counter
-        .most_common(5)
+        topic_counter.most_common(5)
     ):
 
         if count >= 2:
@@ -146,38 +149,16 @@ def generate_insights(
                     "MEDIUM"
             })
 
-
-    # ===============================
-    # TRIGGERS GEMINI
-    # ===============================
-
-    triggers = []
-
-
-    for analysis in analyses:
-
-        data = (
-            analysis.analysis_json
-            or {}
-        )
-
-
-        triggers.extend(
-            data.get(
-                "triggers",
-                []
-            )
-        )
-
+    # =====================================
+    # DESENCADENANTES FRECUENTES
+    # =====================================
 
     trigger_counter = Counter(
         triggers
     )
 
-
     for trigger, count in (
-        trigger_counter
-        .most_common(5)
+        trigger_counter.most_common(5)
     ):
 
         if count >= 2:
@@ -197,6 +178,5 @@ def generate_insights(
                 "priority":
                     "HIGH"
             })
-
 
     return insights

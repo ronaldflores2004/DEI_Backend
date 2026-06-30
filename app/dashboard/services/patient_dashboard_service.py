@@ -1,5 +1,3 @@
-from fastapi import HTTPException
-
 from sqlalchemy.orm import Session
 
 from app.identity.models.patient_profile import (
@@ -20,33 +18,28 @@ from app.analysis.services.weekly_summary_service import (
 
 
 def get_patient_dashboard(
-    current_user_id: int,
+    patient: PatientProfile,
     db: Session
 ):
 
-    patient = (
-        db.query(PatientProfile)
-        .filter(
-            PatientProfile.user_id == current_user_id
-        )
-        .first()
-    )
-
-    if not patient:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes perfil de paciente"
-        )
+    # =====================================
+    # RESUMEN SEMANAL
+    # =====================================
 
     weekly = get_weekly_summary(
-        current_user_id,
+        patient.user_id,
         db
     )
+
+    # =====================================
+    # ÚLTIMA RECOMENDACIÓN
+    # =====================================
 
     latest_recommendation = (
         db.query(PatientRecommendation)
         .filter(
-            PatientRecommendation.patient_id == patient.id
+            PatientRecommendation.patient_id
+            == patient.id
         )
         .order_by(
             PatientRecommendation.created_at.desc()
@@ -54,13 +47,22 @@ def get_patient_dashboard(
         .first()
     )
 
+    # =====================================
+    # TOTAL DE ENTRADAS
+    # =====================================
+
     entries_count = (
         db.query(EmotionalEntry)
         .filter(
-            EmotionalEntry.patient_id == patient.id
+            EmotionalEntry.patient_id
+            == patient.id
         )
         .count()
     )
+
+    # =====================================
+    # DASHBOARD
+    # =====================================
 
     return {
 
@@ -86,7 +88,9 @@ def get_patient_dashboard(
             weekly["ai_summary"],
 
         "latest_recommendation":
-            latest_recommendation.content
-            if latest_recommendation
-            else None
+            (
+                latest_recommendation.content
+                if latest_recommendation
+                else None
+            )
     }

@@ -24,6 +24,22 @@ from app.dashboard.services.professional_dashboard_service import (
     get_professional_dashboard
 )
 
+from app.core.dependencies import (
+    get_current_patient_profile
+)
+
+from app.identity.models.patient_profile import (
+    PatientProfile
+)
+
+from app.core.dependencies import (
+    get_current_professional_profile
+)
+
+from app.identity.models.professional_profile import (
+    ProfessionalProfile
+)
+
 router = APIRouter(
     prefix="/dashboard",
     tags=["Dashboard"]
@@ -36,12 +52,14 @@ router = APIRouter(
 )
 def patient_dashboard(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    patient: PatientProfile = Depends(
+        get_current_patient_profile
+    )
 ):
 
     return get_patient_dashboard(
-        current_user.id,
-        db
+        patient=patient,
+        db=db
     )
     
 @router.get(
@@ -50,10 +68,12 @@ def patient_dashboard(
 )
 def professional_dashboard(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    professional: ProfessionalProfile = Depends(
+        get_current_professional_profile
+    )
 ):
 
     return get_professional_dashboard(
-        current_user.id,
-        db
+        professional=professional,
+        db=db
     )

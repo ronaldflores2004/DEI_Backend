@@ -1,7 +1,5 @@
 from collections import Counter
 
-from fastapi import HTTPException
-
 from sqlalchemy.orm import Session
 
 from app.identity.models.patient_profile import (
@@ -23,24 +21,26 @@ from app.analysis.services.weekly_summary_ai_service import (
 from datetime import datetime, timedelta
 
 
+NEGATIVE_EMOTIONS = [
+    "Ansiedad",
+    "Tristeza",
+    "Miedo",
+    "Estrés",
+    "Soledad",
+    "Frustración",
+    "Preocupación"
+]
+
+POSITIVE_EMOTIONS = [
+    "Calma",
+    "Alegría",
+    "Gratitud"
+]
+
 def get_weekly_summary(
-    current_user_id: int,
+    patient: PatientProfile,
     db: Session
 ):
-
-    patient = (
-        db.query(PatientProfile)
-        .filter(
-            PatientProfile.user_id == current_user_id
-        )
-        .first()
-    )
-
-    if not patient:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes perfil de paciente"
-        )
 
     week_ago = (
         datetime.utcnow()
@@ -160,22 +160,10 @@ def get_weekly_summary(
 
     trend = "ESTABLE"
 
-    if latest_emotion in [
-        "Ansiedad",
-        "Tristeza",
-        "Miedo",
-        "Estrés",
-        "Soledad",
-        "Frustración",
-        "Preocupación"
-    ]:
+    if latest_emotion in NEGATIVE_EMOTIONS:
         trend = "ATENCION"
 
-    elif latest_emotion in [
-        "Calma",
-        "Alegría",
-        "Gratitud"
-    ]:
+    elif latest_emotion in POSITIVE_EMOTIONS:
         trend = "MEJORA"
 
     topics = []

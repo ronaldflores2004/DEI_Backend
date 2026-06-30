@@ -2,11 +2,19 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
 
-from app.identity.models.user import User
-from app.identity.models.patient_profile import PatientProfile
-from app.identity.models.professional_profile import ProfessionalProfile
+from app.core.dependencies import (
+    get_current_patient_profile,
+    get_current_professional_profile
+)
+
+from app.identity.models.patient_profile import (
+    PatientProfile
+)
+
+from app.identity.models.professional_profile import (
+    ProfessionalProfile
+)
 
 from app.therapy.models.link_request import LinkRequest
 
@@ -33,28 +41,10 @@ router = APIRouter(
 def create_link_request(
     request: LinkRequestCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-
-    if current_user.role != "PATIENT":
-        raise HTTPException(
-            status_code=403,
-            detail="Solo pacientes"
-        )
-
-    patient = (
-        db.query(PatientProfile)
-        .filter(
-            PatientProfile.user_id == current_user.id
-        )
-        .first()
+    patient: PatientProfile = Depends(
+        get_current_patient_profile
     )
-
-    if not patient:
-        raise HTTPException(
-            status_code=404,
-            detail="Perfil de paciente no encontrado"
-        )
+):
 
     professional = (
         db.query(ProfessionalProfile)
@@ -91,6 +81,22 @@ def create_link_request(
             status_code=400,
             detail="Ya existe una solicitud pendiente"
         )
+    
+    existing_relation = (
+        db.query(PatientProfessional)
+        .filter(
+            PatientProfessional.patient_id == patient.id,
+            PatientProfessional.professional_id == professional.id,
+            PatientProfessional.active == True
+        )
+        .first()
+    )
+
+    if existing_relation:
+        raise HTTPException(
+            status_code=400,
+            detail="Ya existe una relación terapéutica activa"
+        )
 
     link_request = LinkRequest(
         patient_id=patient.id,
@@ -109,28 +115,10 @@ def create_link_request(
 @router.get("/pending")
 def get_pending_requests(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-
-    if current_user.role != "PROFESSIONAL":
-        raise HTTPException(
-            status_code=403,
-            detail="Solo profesionales"
-        )
-
-    professional = (
-        db.query(ProfessionalProfile)
-        .filter(
-            ProfessionalProfile.user_id == current_user.id
-        )
-        .first()
+    professional: ProfessionalProfile = Depends(
+        get_current_professional_profile
     )
-
-    if not professional:
-        raise HTTPException(
-            status_code=404,
-            detail="Perfil profesional no encontrado"
-        )
+):
 
     requests = (
         db.query(LinkRequest)
@@ -147,22 +135,10 @@ def get_pending_requests(
 def accept_request(
     request_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-
-    if current_user.role != "PROFESSIONAL":
-        raise HTTPException(
-            status_code=403,
-            detail="Solo profesionales"
-        )
-
-    professional = (
-        db.query(ProfessionalProfile)
-        .filter(
-            ProfessionalProfile.user_id == current_user.id
-        )
-        .first()
+    professional: ProfessionalProfile = Depends(
+        get_current_professional_profile
     )
+):
 
     link_request = (
         db.query(LinkRequest)
@@ -183,7 +159,31 @@ def accept_request(
             status_code=403,
             detail="Solicitud no pertenece a este profesional"
         )
+    
+    existing_relation = (
+        db.query(PatientProfessional)
+        .filter(
+            PatientProfessional.patient_id
+            == link_request.patient_id,
+            PatientProfessional.professional_id
+            == professional.id,
+            PatientProfessional.active == True
+        )
+        .first()
+    )
 
+    if existing_relation:
+        raise HTTPException(
+            status_code=400,
+            detail="La relación terapéutica ya existe"
+        )
+    
+    if link_request.status != "PENDING":
+        raise HTTPException(
+            status_code=400,
+            detail="La solicitud ya fue procesada"
+        )
+    
     link_request.status = "ACCEPTED"
 
     relationship = PatientProfessional(

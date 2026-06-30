@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
+
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -7,6 +9,7 @@ from app.identity.models.user import User
 
 from app.identity.schemas.user_create import UserCreate
 from app.identity.schemas.user_response import UserResponse
+from app.identity.schemas.token_response import TokenResponse
 
 from app.core.security import (
     hash_password,
@@ -14,21 +17,18 @@ from app.core.security import (
     create_access_token
 )
 
-from app.identity.schemas.login_request import LoginRequest
-from app.identity.schemas.token_response import TokenResponse
-
-from app.core.dependencies import get_current_user
-
 from app.core.dependencies import (
     get_current_user,
     require_role
 )
-from fastapi.security import OAuth2PasswordRequestForm
+
+from app.shared.enums.role_enum import RoleEnum
 
 router = APIRouter(
     prefix="/auth",
     tags=["Authentication"]
 )
+
 
 @router.post(
     "/register",
@@ -51,6 +51,17 @@ def register_user(
             detail="Email ya registrado"
         )
 
+    # =====================================
+    # SEGURIDAD:
+    # No permitir registro público ADMIN
+    # =====================================
+
+    if user.role == RoleEnum.ADMIN:
+        raise HTTPException(
+            status_code=403,
+            detail="No está permitido registrar administradores"
+        )
+
     new_user = User(
         email=user.email,
         password_hash=hash_password(user.password),
@@ -59,10 +70,13 @@ def register_user(
     )
 
     db.add(new_user)
+
     db.commit()
+
     db.refresh(new_user)
 
     return new_user
+
 
 @router.post(
     "/login",
@@ -75,7 +89,9 @@ def login(
 
     user = (
         db.query(User)
-        .filter(User.email == form_data.username)
+        .filter(
+            User.email == form_data.username
+        )
         .first()
     )
 
@@ -83,6 +99,12 @@ def login(
         raise HTTPException(
             status_code=401,
             detail="Credenciales inválidas"
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=403,
+            detail="Usuario desactivado"
         )
 
     if not verify_password(
@@ -107,6 +129,7 @@ def login(
         token_type="bearer"
     )
 
+
 @router.get("/me")
 def get_me(
     current_user: User = Depends(get_current_user)
@@ -118,22 +141,28 @@ def get_me(
         "is_active": current_user.is_active
     }
 
+
 @router.get("/test-me")
 def test_me(
     current_user: User = Depends(get_current_user)
 ):
     return current_user.email
 
+
 @router.get("/admin-only")
 def admin_only(
     current_user: User = Depends(
-        require_role("ADMIN")
+        require_role(RoleEnum.ADMIN)
     )
 ):
     return {
         "message": "Acceso permitido",
         "user": current_user.email
     }
+
+
 @router.get("/public-test")
 def public_test():
-    return {"ok": True}
+    return {
+        "ok": True
+    }

@@ -14,13 +14,19 @@ from app.therapy.models.patient_professional import (
     PatientProfessional
 )
 
+from app.therapy.services.access_policy_service import (
+    has_active_consent
+)
+
 
 def get_risk_alerts(
     professional_id: int,
     db: Session
 ):
 
-    patient_data = defaultdict(list)
+    # =====================================
+    # PACIENTES CON RELACIÓN Y CONSENTIMIENTO
+    # =====================================
 
     patient_relations = (
         db.query(PatientProfessional)
@@ -32,15 +38,37 @@ def get_risk_alerts(
         .all()
     )
 
-    allowed_patients = {
-        relation.patient_id
-        for relation in patient_relations
-    }
+    allowed_patients = set()
+
+    for relation in patient_relations:
+
+        if has_active_consent(
+            patient_id=relation.patient_id,
+            professional_id=professional_id,
+            db=db
+        ):
+            allowed_patients.add(
+                relation.patient_id
+            )
+
+    # =====================================
+    # ANÁLISIS EMOCIONALES
+    # =====================================
 
     analyses = (
-        db.query(EmotionalAnalysis)
+        db.query(
+            EmotionalAnalysis,
+            EmotionalEntry
+        )
+        .join(
+            EmotionalEntry,
+            EmotionalAnalysis.entry_id
+            == EmotionalEntry.id
+        )
         .all()
     )
+
+    patient_data = defaultdict(list)
 
     risk_order = {
         "Bajo": 1,
@@ -56,7 +84,11 @@ def get_risk_alerts(
         "Estrés"
     ]
 
-    for analysis in analyses:
+    # =====================================
+    # AGRUPAR ANÁLISIS POR PACIENTE
+    # =====================================
+
+    for analysis, entry in analyses:
 
         if analysis.risk_level not in [
             "Medio",
@@ -65,24 +97,18 @@ def get_risk_alerts(
         ]:
             continue
 
-        entry = (
-            db.query(EmotionalEntry)
-            .filter(
-                EmotionalEntry.id
-                == analysis.entry_id
-            )
-            .first()
-        )
-
-        if not entry:
-            continue
-
         if entry.patient_id not in allowed_patients:
             continue
 
         patient_data[
             entry.patient_id
-        ].append(analysis)
+        ].append(
+            analysis
+        )
+
+    # =====================================
+    # GENERAR ALERTAS
+    # =====================================
 
     alerts = []
 
@@ -90,17 +116,17 @@ def get_risk_alerts(
 
         highest_risk = max(
             analyses_list,
-            key=lambda a:
+            key=lambda analysis:
                 risk_order.get(
-                    a.risk_level,
+                    analysis.risk_level,
                     0
                 )
         ).risk_level
 
         latest_analysis = max(
             analyses_list,
-            key=lambda a:
-                a.analyzed_at
+            key=lambda analysis:
+                analysis.analyzed_at
         )
 
         negative_count = sum(

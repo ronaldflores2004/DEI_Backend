@@ -1,13 +1,24 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from fastapi import UploadFile
+from fastapi import File
+
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
 
-from app.identity.models.user import User
-from app.identity.models.patient_profile import PatientProfile
+from app.core.dependencies import (
+    get_current_patient_profile
+)
 
-from app.entries.models.emotional_entry import EmotionalEntry
+from app.identity.models.patient_profile import (
+    PatientProfile
+)
+
+from app.entries.models.emotional_entry import (
+    EmotionalEntry
+)
 
 from app.entries.schemas.emotional_entry_create import (
     EmotionalEntryCreate
@@ -16,9 +27,6 @@ from app.entries.schemas.emotional_entry_create import (
 from app.entries.schemas.emotional_entry_response import (
     EmotionalEntryResponse
 )
-
-from fastapi import UploadFile
-from fastapi import File
 
 import os
 import uuid
@@ -29,6 +37,11 @@ router = APIRouter(
     tags=["Emotional Entries"]
 )
 
+
+# =====================================
+# Crear entrada de texto
+# =====================================
+
 @router.post(
     "",
     response_model=EmotionalEntryResponse
@@ -36,28 +49,10 @@ router = APIRouter(
 def create_entry(
     entry: EmotionalEntryCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-
-    if current_user.role != "PATIENT":
-        raise HTTPException(
-            status_code=403,
-            detail="Solo pacientes"
-        )
-
-    patient = (
-        db.query(PatientProfile)
-        .filter(
-            PatientProfile.user_id == current_user.id
-        )
-        .first()
+    patient: PatientProfile = Depends(
+        get_current_patient_profile
     )
-
-    if not patient:
-        raise HTTPException(
-            status_code=404,
-            detail="Perfil de paciente no encontrado"
-        )
+):
 
     emotional_entry = EmotionalEntry(
         patient_id=patient.id,
@@ -74,32 +69,18 @@ def create_entry(
     return emotional_entry
 
 
+# =====================================
+# Crear entrada de audio
+# =====================================
+
 @router.post("/audio")
 async def create_audio_entry(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-
-    if current_user.role != "PATIENT":
-        raise HTTPException(
-            status_code=403,
-            detail="Solo pacientes"
-        )
-
-    patient = (
-        db.query(PatientProfile)
-        .filter(
-            PatientProfile.user_id == current_user.id
-        )
-        .first()
+    patient: PatientProfile = Depends(
+        get_current_patient_profile
     )
-
-    if not patient:
-        raise HTTPException(
-            status_code=404,
-            detail="Perfil de paciente no encontrado"
-        )
+):
 
     extension = os.path.splitext(
         file.filename
@@ -136,27 +117,27 @@ async def create_audio_entry(
 
     return emotional_entry
 
+
+# =====================================
+# Listar entradas
+# =====================================
+
 @router.get(
     "",
     response_model=list[EmotionalEntryResponse]
 )
 def get_entries(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-
-    patient = (
-        db.query(PatientProfile)
-        .filter(
-            PatientProfile.user_id == current_user.id
-        )
-        .first()
+    patient: PatientProfile = Depends(
+        get_current_patient_profile
     )
+):
 
     entries = (
         db.query(EmotionalEntry)
         .filter(
-            EmotionalEntry.patient_id == patient.id
+            EmotionalEntry.patient_id
+            == patient.id
         )
         .order_by(
             EmotionalEntry.created_at.desc()
@@ -166,6 +147,11 @@ def get_entries(
 
     return entries
 
+
+# =====================================
+# Obtener entrada
+# =====================================
+
 @router.get(
     "/{entry_id}",
     response_model=EmotionalEntryResponse
@@ -173,16 +159,10 @@ def get_entries(
 def get_entry(
     entry_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-
-    patient = (
-        db.query(PatientProfile)
-        .filter(
-            PatientProfile.user_id == current_user.id
-        )
-        .first()
+    patient: PatientProfile = Depends(
+        get_current_patient_profile
     )
+):
 
     entry = (
         db.query(EmotionalEntry)
@@ -201,20 +181,19 @@ def get_entry(
 
     return entry
 
+
+# =====================================
+# Archivar entrada
+# =====================================
+
 @router.patch("/{entry_id}/archive")
 def archive_entry(
     entry_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-
-    patient = (
-        db.query(PatientProfile)
-        .filter(
-            PatientProfile.user_id == current_user.id
-        )
-        .first()
+    patient: PatientProfile = Depends(
+        get_current_patient_profile
     )
+):
 
     entry = (
         db.query(EmotionalEntry)

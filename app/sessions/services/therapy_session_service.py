@@ -22,6 +22,10 @@ from app.notifications.models.notification import (
     Notification
 )
 
+from app.therapy.services.access_policy_service import (
+    has_active_consent
+)
+
 def create_session(
     current_user_id: int,
     data,
@@ -74,6 +78,16 @@ def create_session(
         raise HTTPException(
             status_code=403,
             detail="No tienes acceso a este paciente"
+        )
+    
+    if not has_active_consent(
+        patient_id=patient.id,
+        professional_id=professional.id,
+        db=db
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="No existe consentimiento activo"
         )
 
     session = TherapySession(
@@ -176,7 +190,7 @@ def complete_session(
             status_code=403,
             detail="No tienes acceso a esta sesión"
         )
-
+    
     if session.status == "COMPLETED":
         raise HTTPException(
             status_code=400,

@@ -25,6 +25,10 @@ from app.therapy_insights.services.insight_generator_service import (
     generate_insights
 )
 
+from app.therapy.services.access_policy_service import (
+    has_active_consent
+)
+
 router = APIRouter(
     prefix="/therapy-insights",
     tags=["Therapy Insights"]
@@ -69,6 +73,20 @@ def get_patient_insights(
         raise HTTPException(
             status_code=403,
             detail="No tienes acceso a este paciente"
+        )
+
+    # Seguridad clínica:
+    # además de la relación terapéutica,
+    # debe existir consentimiento activo.
+
+    if not has_active_consent(
+        patient_id=patient_id,
+        professional_id=professional.id,
+        db=db
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="No existe consentimiento activo"
         )
 
     return generate_insights(

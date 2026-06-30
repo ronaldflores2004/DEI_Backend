@@ -24,27 +24,19 @@ from app.therapy_insights.services.insight_generator_service import (
     generate_insights
 )
 
+from app.therapy.services.access_policy_service import (
+    has_active_consent
+)
+
 
 def get_professional_dashboard(
-    current_user_id: int,
+    professional: ProfessionalProfile,
     db: Session
 ):
 
-    professional = (
-        db.query(ProfessionalProfile)
-        .filter(
-            ProfessionalProfile.user_id == current_user_id
-        )
-        .first()
-    )
-
-    if not professional:
-        return {
-            "active_patients": 0,
-            "patients_with_risk": 0,
-            "pending_link_requests": 0,
-            "total_insights": 0
-        }
+    # =====================================
+    # PACIENTES ACTIVOS
+    # =====================================
 
     relations = (
         db.query(PatientProfessional)
@@ -56,12 +48,26 @@ def get_professional_dashboard(
         .all()
     )
 
-    patient_ids = [
-        relation.patient_id
-        for relation in relations
-    ]
+    patient_ids = []
 
-    active_patients = len(patient_ids)
+    for relation in relations:
+
+        if has_active_consent(
+            patient_id=relation.patient_id,
+            professional_id=professional.id,
+            db=db
+        ):
+            patient_ids.append(
+                relation.patient_id
+            )
+
+    active_patients = len(
+        patient_ids
+    )
+
+    # =====================================
+    # SOLICITUDES PENDIENTES
+    # =====================================
 
     pending_requests = (
         db.query(LinkRequest)
@@ -72,6 +78,10 @@ def get_professional_dashboard(
         )
         .count()
     )
+
+    # =====================================
+    # PACIENTES CON RIESGO
+    # =====================================
 
     patients_with_risk = set()
 
@@ -113,7 +123,12 @@ def get_professional_dashboard(
             insights
         )
 
+    # =====================================
+    # DASHBOARD
+    # =====================================
+
     return {
+
         "active_patients":
             active_patients,
 

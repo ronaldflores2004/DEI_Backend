@@ -2,6 +2,10 @@ from fastapi import HTTPException
 
 from sqlalchemy.orm import Session
 
+from app.identity.models.patient_profile import (
+    PatientProfile
+)
+
 from app.analysis.models.emotional_analysis import (
     EmotionalAnalysis
 )
@@ -19,11 +23,19 @@ from app.recommendations.services.recommendation_generator_service import (
 )
 
 
+# =====================================
+# Generar recomendación desde análisis
+# =====================================
 
 def generate_from_analysis(
     analysis_id: int,
+    patient: PatientProfile,
     db: Session
 ):
+
+    # =====================================
+    # Buscar análisis
+    # =====================================
 
     analysis = (
         db.query(EmotionalAnalysis)
@@ -38,16 +50,10 @@ def generate_from_analysis(
             status_code=404,
             detail="Análisis no encontrado"
         )
-    existing = (
-        db.query(PatientRecommendation)
-        .filter(
-            PatientRecommendation.analysis_id == analysis_id
-        )
-        .first()
-    )
 
-    if existing:
-        return existing
+    # =====================================
+    # Buscar entrada relacionada
+    # =====================================
 
     entry = (
         db.query(EmotionalEntry)
@@ -63,16 +69,51 @@ def generate_from_analysis(
             detail="Entrada no encontrada"
         )
 
-    recommendation_data = generate_recommendation(
-        analysis.primary_emotion
+    # =====================================
+    # Validar propiedad del análisis
+    # =====================================
+
+    if entry.patient_id != patient.id:
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "No tienes permiso para generar "
+                "recomendaciones de este análisis"
+            )
+        )
+
+    # =====================================
+    # Evitar duplicados
+    # =====================================
+
+    existing = (
+        db.query(PatientRecommendation)
+        .filter(
+            PatientRecommendation.analysis_id
+            == analysis_id
+        )
+        .first()
+    )
+
+    if existing:
+        return existing
+
+    # =====================================
+    # Generar contenido
+    # =====================================
+
+    recommendation_data = (
+        generate_recommendation(
+            analysis.primary_emotion
+        )
     )
 
     recommendation = PatientRecommendation(
-    patient_id=entry.patient_id,
-    analysis_id=analysis.id,
-    title=recommendation_data["title"],
-    content=recommendation_data["content"],
-    source="AI"
+        patient_id=patient.id,
+        analysis_id=analysis.id,
+        title=recommendation_data["title"],
+        content=recommendation_data["content"],
+        source="AI"
     )
 
     db.add(recommendation)

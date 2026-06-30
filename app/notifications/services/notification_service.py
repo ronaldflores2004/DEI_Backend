@@ -61,6 +61,7 @@ def mark_as_read(
     db.refresh(notification)
 
     return notification
+
 def get_notification_summary(
     current_user_id: int,
     db: Session

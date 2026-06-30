@@ -1,5 +1,3 @@
-from fastapi import HTTPException
-
 from sqlalchemy.orm import Session
 
 from app.identity.models.patient_profile import (
@@ -11,25 +9,15 @@ from app.recommendations.models.patient_recommendation import (
 )
 
 
+# =====================================
+# Crear recomendación manual
+# =====================================
+
 def create_recommendation(
-    current_user_id: int,
+    patient: PatientProfile,
     data,
     db: Session
 ):
-
-    patient = (
-        db.query(PatientProfile)
-        .filter(
-            PatientProfile.user_id == current_user_id
-        )
-        .first()
-    )
-
-    if not patient:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes perfil de paciente"
-        )
 
     recommendation = PatientRecommendation(
         patient_id=patient.id,
@@ -47,29 +35,20 @@ def create_recommendation(
     return recommendation
 
 
+# =====================================
+# Obtener recomendaciones del paciente
+# =====================================
+
 def get_my_recommendations(
-    current_user_id: int,
+    patient: PatientProfile,
     db: Session
 ):
-
-    patient = (
-        db.query(PatientProfile)
-        .filter(
-            PatientProfile.user_id == current_user_id
-        )
-        .first()
-    )
-
-    if not patient:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes perfil de paciente"
-        )
 
     return (
         db.query(PatientRecommendation)
         .filter(
-            PatientRecommendation.patient_id == patient.id
+            PatientRecommendation.patient_id
+            == patient.id
         )
         .order_by(
             PatientRecommendation.created_at.desc()

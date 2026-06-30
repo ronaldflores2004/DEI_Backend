@@ -30,9 +30,20 @@ from app.analysis.services.gemini_analysis_service import (
     analyze_text_with_gemini
 )
 
+def validate_entry_owner(
+    entry: EmotionalEntry,
+    patient: PatientProfile
+):
+
+    if entry.patient_id != patient.id:
+        raise HTTPException(
+            status_code=403,
+            detail="No tienes permiso para acceder a esta entrada"
+        )
+
 def create_analysis(
     entry_id: int,
-    current_user_id: int,
+    patient: PatientProfile,
     data,
     db: Session
 ):
@@ -51,25 +62,10 @@ def create_analysis(
             detail="Entrada no encontrada"
         )
 
-    patient = (
-        db.query(PatientProfile)
-        .filter(
-            PatientProfile.user_id == current_user_id
-        )
-        .first()
+    validate_entry_owner(
+        entry,
+        patient
     )
-
-    if not patient:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes perfil de paciente"
-        )
-
-    if entry.patient_id != patient.id:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes permiso para analizar esta entrada"
-        )
 
     existing = (
         db.query(EmotionalAnalysis)
@@ -104,7 +100,7 @@ def create_analysis(
 
 def get_analysis(
     entry_id: int,
-    current_user_id: int,
+    patient: PatientProfile,
     db: Session
 ):
 
@@ -136,31 +132,16 @@ def get_analysis(
             detail="Entrada no encontrada"
         )
 
-    patient = (
-        db.query(PatientProfile)
-        .filter(
-            PatientProfile.user_id == current_user_id
-        )
-        .first()
+    validate_entry_owner(
+        entry,
+        patient
     )
-
-    if not patient:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes perfil de paciente"
-        )
-
-    if entry.patient_id != patient.id:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes permiso para ver este análisis"
-        )
 
     return analysis
 
 def create_analysis_from_entry(
     entry_id: int,
-    current_user_id: int,
+    patient: PatientProfile,
     db: Session
 ):
 
@@ -216,25 +197,10 @@ def create_analysis_from_entry(
             detail="No existe texto para analizar"
         )
 
-    patient = (
-        db.query(PatientProfile)
-        .filter(
-            PatientProfile.user_id == current_user_id
-        )
-        .first()
+    validate_entry_owner(
+        entry,
+        patient
     )
-
-    if not patient:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes perfil de paciente"
-        )
-
-    if entry.patient_id != patient.id:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes permiso"
-        )
 
     existing = (
         db.query(EmotionalAnalysis)

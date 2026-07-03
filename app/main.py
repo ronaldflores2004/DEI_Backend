@@ -97,6 +97,10 @@ from app.notifications.routers.notification_router import (
     router as notification_router
 )
 
+from app.administration.routers.administration_router import (
+    router as administration_router
+)
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -134,6 +138,10 @@ app.include_router(
 
 app.include_router(
     notification_router
+)
+
+app.include_router(
+    administration_router
 )
 
 @app.get("/")

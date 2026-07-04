@@ -7,6 +7,10 @@ from app.core.database import get_db
 
 from app.identity.models.user import User
 
+from app.identity.repositories.user_repository import (
+    UserRepository
+)
+
 from app.identity.schemas.user_create import UserCreate
 from app.identity.schemas.user_response import UserResponse
 from app.identity.schemas.token_response import TokenResponse
@@ -39,10 +43,9 @@ def register_user(
     db: Session = Depends(get_db)
 ):
 
-    existing_user = (
-        db.query(User)
-        .filter(User.email == user.email)
-        .first()
+    existing_user = UserRepository.get_by_email(
+        db,
+        user.email
     )
 
     if existing_user:
@@ -69,11 +72,10 @@ def register_user(
         is_active=True
     )
 
-    db.add(new_user)
-
-    db.commit()
-
-    db.refresh(new_user)
+    new_user = UserRepository.create(
+        db,
+        new_user
+    )
 
     return new_user
 
@@ -87,12 +89,9 @@ def login(
     db: Session = Depends(get_db)
 ):
 
-    user = (
-        db.query(User)
-        .filter(
-            User.email == form_data.username
-        )
-        .first()
+    user = UserRepository.get_by_email(
+        db,
+        form_data.username
     )
 
     if not user:

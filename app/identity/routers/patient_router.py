@@ -7,6 +7,10 @@ from app.core.dependencies import get_current_user
 from app.identity.models.user import User
 from app.identity.models.patient_profile import PatientProfile
 
+from app.identity.repositories.patient_repository import (
+    PatientRepository
+)
+
 from app.identity.schemas.patient_profile_create import (
     PatientProfileCreate
 )
@@ -31,12 +35,9 @@ def create_profile(
     current_user: User = Depends(get_current_user)
 ):
 
-    existing_profile = (
-        db.query(PatientProfile)
-        .filter(
-            PatientProfile.user_id == current_user.id
-        )
-        .first()
+    existing_profile = PatientRepository.get_by_user_id(
+        db,
+        current_user.id
     )
 
     if existing_profile:
@@ -53,13 +54,13 @@ def create_profile(
         gender=profile.gender
     )
 
-    db.add(patient_profile)
-
-    db.commit()
-
-    db.refresh(patient_profile)
+    patient_profile = PatientRepository.create(
+        db,
+        patient_profile
+    )
 
     return patient_profile
+
 
 @router.get(
     "/profile/me",
@@ -70,12 +71,9 @@ def get_my_profile(
     current_user: User = Depends(get_current_user)
 ):
 
-    profile = (
-        db.query(PatientProfile)
-        .filter(
-            PatientProfile.user_id == current_user.id
-        )
-        .first()
+    profile = PatientRepository.get_by_user_id(
+        db,
+        current_user.id
     )
 
     if not profile:

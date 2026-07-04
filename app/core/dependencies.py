@@ -21,6 +21,18 @@ from app.identity.models.professional_profile import (
     ProfessionalProfile
 )
 
+from app.identity.repositories.user_repository import (
+    UserRepository
+)
+
+from app.identity.repositories.patient_repository import (
+    PatientRepository
+)
+
+from app.identity.repositories.professional_repository import (
+    ProfessionalRepository
+)
+
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/auth/login"
 )
@@ -52,12 +64,9 @@ def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    user = (
-        db.query(User)
-        .filter(
-            User.id == int(user_id)
-        )
-        .first()
+    user = UserRepository.get_by_id(
+        db,
+        int(user_id)
     )
 
     if user is None:
@@ -95,6 +104,7 @@ def require_role(required_role):
 
     return role_checker
 
+
 def get_current_patient_profile(
     current_user: User = Depends(
         get_current_user
@@ -102,13 +112,9 @@ def get_current_patient_profile(
     db: Session = Depends(get_db)
 ):
 
-    patient = (
-        db.query(PatientProfile)
-        .filter(
-            PatientProfile.user_id
-            == current_user.id
-        )
-        .first()
+    patient = PatientRepository.get_by_user_id(
+        db,
+        current_user.id
     )
 
     if not patient:
@@ -119,6 +125,7 @@ def get_current_patient_profile(
 
     return patient
 
+
 def get_current_professional_profile(
     current_user: User = Depends(
         get_current_user
@@ -126,13 +133,9 @@ def get_current_professional_profile(
     db: Session = Depends(get_db)
 ):
 
-    professional = (
-        db.query(ProfessionalProfile)
-        .filter(
-            ProfessionalProfile.user_id
-            == current_user.id
-        )
-        .first()
+    professional = ProfessionalRepository.get_by_user_id(
+        db,
+        current_user.id
     )
 
     if not professional:

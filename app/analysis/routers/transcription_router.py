@@ -10,16 +10,21 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 
 from app.identity.models.user import User
-from app.identity.models.patient_profile import (
-    PatientProfile
+
+from app.identity.repositories.patient_repository import (
+    PatientRepository
 )
 
-from app.entries.models.emotional_entry import (
-    EmotionalEntry
+from app.entries.repositories.emotional_entry_repository import (
+    EmotionalEntryRepository
 )
 
 from app.analysis.models.audio_transcription import (
     AudioTranscription
+)
+
+from app.analysis.repositories.transcription_repository import (
+    TranscriptionRepository
 )
 
 from app.analysis.schemas.transcription_create import (
@@ -48,12 +53,12 @@ def create_transcription(
 ):
 
     # Obtener perfil del paciente autenticado
+
     patient = (
-        db.query(PatientProfile)
-        .filter(
-            PatientProfile.user_id == current_user.id
+        PatientRepository.get_by_user_id(
+            db=db,
+            user_id=current_user.id
         )
-        .first()
     )
 
     if not patient:
@@ -63,12 +68,12 @@ def create_transcription(
         )
 
     # Buscar entrada emocional
+
     entry = (
-        db.query(EmotionalEntry)
-        .filter(
-            EmotionalEntry.id == entry_id
+        EmotionalEntryRepository.get_by_id(
+            db=db,
+            entry_id=entry_id
         )
-        .first()
     )
 
     if not entry:
@@ -80,6 +85,7 @@ def create_transcription(
     # Seguridad:
     # solo el propietario puede crear
     # transcripciones sobre su entrada
+
     if entry.patient_id != patient.id:
         raise HTTPException(
             status_code=403,
@@ -90,13 +96,12 @@ def create_transcription(
         )
 
     # Evitar múltiples transcripciones
-    # para una misma entrada
+
     existing_transcription = (
-        db.query(AudioTranscription)
-        .filter(
-            AudioTranscription.entry_id == entry.id
+        TranscriptionRepository.get_by_entry(
+            db=db,
+            entry_id=entry.id
         )
-        .first()
     )
 
     if existing_transcription:
@@ -114,10 +119,11 @@ def create_transcription(
         provider="MANUAL"
     )
 
-    db.add(transcription)
-
-    db.commit()
-
-    db.refresh(transcription)
+    transcription = (
+        TranscriptionRepository.create(
+            db=db,
+            transcription=transcription
+        )
+    )
 
     return transcription

@@ -2,14 +2,10 @@ from collections import Counter
 
 from sqlalchemy.orm import Session
 
-from app.entries.models.emotional_entry import (
-    EmotionalEntry
-)
 
-from app.analysis.models.emotional_analysis import (
-    EmotionalAnalysis
+from app.analysis.repositories.emotional_analysis_repository import (
+    EmotionalAnalysisRepository
 )
-
 
 def generate_insights(
     patient_id: int,
@@ -21,17 +17,10 @@ def generate_insights(
     # =====================================
 
     analyses = (
-        db.query(EmotionalAnalysis)
-        .join(
-            EmotionalEntry,
-            EmotionalAnalysis.entry_id
-            == EmotionalEntry.id
+        EmotionalAnalysisRepository.get_by_patient(
+            db=db,
+            patient_id=patient_id
         )
-        .filter(
-            EmotionalEntry.patient_id
-            == patient_id
-        )
-        .all()
     )
 
     insights = []

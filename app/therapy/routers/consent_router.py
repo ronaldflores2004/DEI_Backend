@@ -160,7 +160,10 @@ def revoke_consent(
     consent.granted = False
     consent.revoked_at = datetime.utcnow()
 
-    db.commit()
+    ConsentRepository.update(
+        db,
+        consent
+    )
 
     return {
         "message": "Consentimiento revocado"

@@ -1,4 +1,5 @@
 from collections import Counter
+from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -6,19 +7,13 @@ from app.identity.models.patient_profile import (
     PatientProfile
 )
 
-from app.entries.models.emotional_entry import (
-    EmotionalEntry
-)
-
-from app.analysis.models.emotional_analysis import (
-    EmotionalAnalysis
+from app.analysis.repositories.emotional_analysis_repository import (
+    EmotionalAnalysisRepository
 )
 
 from app.analysis.services.weekly_summary_ai_service import (
     generate_ai_summary
 )
-
-from datetime import datetime, timedelta
 
 
 NEGATIVE_EMOTIONS = [
@@ -37,6 +32,7 @@ POSITIVE_EMOTIONS = [
     "Gratitud"
 ]
 
+
 def get_weekly_summary(
     patient: PatientProfile,
     db: Session
@@ -48,21 +44,11 @@ def get_weekly_summary(
     )
 
     analyses = (
-        db.query(EmotionalAnalysis)
-        .join(
-            EmotionalEntry,
-            EmotionalAnalysis.entry_id
-            == EmotionalEntry.id
+        EmotionalAnalysisRepository.get_weekly_by_patient(
+            db=db,
+            patient_id=patient.id,
+            since=week_ago
         )
-        .filter(
-            EmotionalEntry.patient_id
-            == patient.id
-        )
-        .filter(
-            EmotionalAnalysis.analyzed_at
-            >= week_ago
-        )
-        .all()
     )
 
     if not analyses:
@@ -108,8 +94,6 @@ def get_weekly_summary(
         if analysis.emotion_intensity
     ]
 
-    average_intensity = None
-
     intensity_values = {
         "Baja": 1,
         "Media": 2,
@@ -136,8 +120,7 @@ def get_weekly_summary(
         )
 
         average = round(
-            total /
-            len(valid_intensities)
+            total / len(valid_intensities)
         )
 
         average_intensity = (
@@ -161,9 +144,11 @@ def get_weekly_summary(
     trend = "ESTABLE"
 
     if latest_emotion in NEGATIVE_EMOTIONS:
+
         trend = "ATENCION"
 
     elif latest_emotion in POSITIVE_EMOTIONS:
+
         trend = "MEJORA"
 
     topics = []
@@ -211,7 +196,6 @@ def get_weekly_summary(
             f"Tu emoción más reciente fue "
             f"{latest_emotion}."
         )
-
 
     return {
 

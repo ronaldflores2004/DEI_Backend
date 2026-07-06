@@ -62,3 +62,15 @@ class ProfessionalRepository:
         db.refresh(profile)
 
         return profile
+    
+    @staticmethod
+    def update(
+        db: Session,
+        profile: ProfessionalProfile,
+    ) -> ProfessionalProfile:
+
+        db.commit()
+
+        db.refresh(profile)
+
+        return profile

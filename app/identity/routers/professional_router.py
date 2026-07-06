@@ -123,7 +123,10 @@ def verify_professional(
     professional.verified_by_admin = current_user.id
     professional.verified_at = datetime.utcnow()
 
-    db.commit()
+    ProfessionalRepository.update(
+        db,
+        professional
+    )
 
     return {
         "message": "Profesional verificado"

@@ -12,8 +12,8 @@ from app.core.dependencies import (
 
 from app.identity.models.user import User
 
-import shutil
 import os
+import shutil
 import uuid
 
 router = APIRouter(
@@ -21,10 +21,8 @@ router = APIRouter(
     tags=["Audio"]
 )
 
-# Tamaño máximo permitido
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+MAX_FILE_SIZE = 10 * 1024 * 1024
 
-# Extensiones permitidas
 ALLOWED_EXTENSIONS = {
     ".mp3",
     ".wav",
@@ -41,7 +39,6 @@ async def upload_audio(
     )
 ):
 
-    # Validar extensión
     extension = os.path.splitext(
         file.filename
     )[1].lower()
@@ -55,7 +52,6 @@ async def upload_audio(
             )
         )
 
-    # Validar tamaño
     content = await file.read()
 
     if len(content) > MAX_FILE_SIZE:
@@ -67,10 +63,13 @@ async def upload_audio(
             )
         )
 
-    # Volver al inicio del archivo
     await file.seek(0)
 
-    # Generar nombre único
+    os.makedirs(
+        "uploads/audio",
+        exist_ok=True
+    )
+
     unique_filename = (
         f"{uuid.uuid4()}{extension}"
     )
@@ -81,8 +80,11 @@ async def upload_audio(
         unique_filename
     )
 
-    # Guardar archivo
-    with open(file_path, "wb") as buffer:
+    with open(
+        file_path,
+        "wb"
+    ) as buffer:
+
         shutil.copyfileobj(
             file.file,
             buffer

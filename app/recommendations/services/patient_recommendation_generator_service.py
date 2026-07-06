@@ -6,12 +6,12 @@ from app.identity.models.patient_profile import (
     PatientProfile
 )
 
-from app.analysis.models.emotional_analysis import (
-    EmotionalAnalysis
+from app.entries.repositories.emotional_entry_repository import (
+    EmotionalEntryRepository
 )
 
-from app.entries.models.emotional_entry import (
-    EmotionalEntry
+from app.analysis.repositories.emotional_analysis_repository import (
+    EmotionalAnalysisRepository
 )
 
 from app.recommendations.models.patient_recommendation import (
@@ -38,11 +38,10 @@ def generate_from_analysis(
     # =====================================
 
     analysis = (
-        db.query(EmotionalAnalysis)
-        .filter(
-            EmotionalAnalysis.id == analysis_id
+        EmotionalAnalysisRepository.get_by_id(
+            db=db,
+            analysis_id=analysis_id
         )
-        .first()
     )
 
     if not analysis:
@@ -56,11 +55,10 @@ def generate_from_analysis(
     # =====================================
 
     entry = (
-        db.query(EmotionalEntry)
-        .filter(
-            EmotionalEntry.id == analysis.entry_id
+        EmotionalEntryRepository.get_by_id(
+            db=db,
+            entry_id=analysis.entry_id
         )
-        .first()
     )
 
     if not entry:

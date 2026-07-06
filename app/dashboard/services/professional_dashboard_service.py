@@ -4,20 +4,16 @@ from app.identity.models.professional_profile import (
     ProfessionalProfile
 )
 
-from app.therapy.models.patient_professional import (
-    PatientProfessional
+from app.therapy.repositories.patient_professional_repository import (
+    PatientProfessionalRepository
 )
 
-from app.therapy.models.link_request import (
-    LinkRequest
+from app.therapy.repositories.link_request_repository import (
+    LinkRequestRepository
 )
 
-from app.entries.models.emotional_entry import (
-    EmotionalEntry
-)
-
-from app.analysis.models.emotional_analysis import (
-    EmotionalAnalysis
+from app.analysis.repositories.emotional_analysis_repository import (
+    EmotionalAnalysisRepository
 )
 
 from app.therapy_insights.services.insight_generator_service import (
@@ -39,24 +35,25 @@ def get_professional_dashboard(
     # =====================================
 
     relations = (
-        db.query(PatientProfessional)
-        .filter(
-            PatientProfessional.professional_id
-            == professional.id,
-            PatientProfessional.active == True
+        PatientProfessionalRepository.get_by_professional(
+            db=db,
+            professional_id=professional.id
         )
-        .all()
     )
 
     patient_ids = []
 
     for relation in relations:
 
-        if has_active_consent(
-            patient_id=relation.patient_id,
-            professional_id=professional.id,
-            db=db
+        if (
+            relation.active
+            and has_active_consent(
+                patient_id=relation.patient_id,
+                professional_id=professional.id,
+                db=db
+            )
         ):
+
             patient_ids.append(
                 relation.patient_id
             )
@@ -69,14 +66,11 @@ def get_professional_dashboard(
     # SOLICITUDES PENDIENTES
     # =====================================
 
-    pending_requests = (
-        db.query(LinkRequest)
-        .filter(
-            LinkRequest.professional_id
-            == professional.id,
-            LinkRequest.status == "PENDING"
+    pending_requests = len(
+        LinkRequestRepository.get_pending_by_professional(
+            db=db,
+            professional_id=professional.id
         )
-        .count()
     )
 
     # =====================================
@@ -90,17 +84,10 @@ def get_professional_dashboard(
     for patient_id in patient_ids:
 
         analyses = (
-            db.query(EmotionalAnalysis)
-            .join(
-                EmotionalEntry,
-                EmotionalAnalysis.entry_id
-                == EmotionalEntry.id
+            EmotionalAnalysisRepository.get_by_patient(
+                db=db,
+                patient_id=patient_id
             )
-            .filter(
-                EmotionalEntry.patient_id
-                == patient_id
-            )
-            .all()
         )
 
         for analysis in analyses:
@@ -110,6 +97,7 @@ def get_professional_dashboard(
                 "Alto",
                 "Crítico"
             ]:
+
                 patients_with_risk.add(
                     patient_id
                 )

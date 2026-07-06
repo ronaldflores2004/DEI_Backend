@@ -4,8 +4,8 @@ from app.identity.models.patient_profile import (
     PatientProfile
 )
 
-from app.entries.models.emotional_entry import (
-    EmotionalEntry
+from app.entries.repositories.emotional_entry_repository import (
+    EmotionalEntryRepository
 )
 
 from app.recommendations.models.patient_recommendation import (
@@ -27,7 +27,7 @@ def get_patient_dashboard(
     # =====================================
 
     weekly = get_weekly_summary(
-        patient.user_id,
+        patient,
         db
     )
 
@@ -52,12 +52,10 @@ def get_patient_dashboard(
     # =====================================
 
     entries_count = (
-        db.query(EmotionalEntry)
-        .filter(
-            EmotionalEntry.patient_id
-            == patient.id
+        EmotionalEntryRepository.count_by_patient(
+            db=db,
+            patient_id=patient.id
         )
-        .count()
     )
 
     # =====================================

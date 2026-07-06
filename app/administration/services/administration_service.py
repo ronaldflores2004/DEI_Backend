@@ -12,12 +12,12 @@ from app.identity.models.professional_profile import (
     ProfessionalProfile
 )
 
-from app.entries.models.emotional_entry import (
-    EmotionalEntry
+from app.entries.repositories.emotional_entry_repository import (
+    EmotionalEntryRepository
 )
 
-from app.analysis.models.emotional_analysis import (
-    EmotionalAnalysis
+from app.analysis.repositories.emotional_analysis_repository import (
+    EmotionalAnalysisRepository
 )
 
 from app.sessions.models.therapy_session import (
@@ -67,10 +67,14 @@ def get_admin_dashboard(
             .count(),
 
         "total_entries":
-            db.query(EmotionalEntry).count(),
+            EmotionalEntryRepository.count_all(
+                db
+            ),
 
         "total_analyses":
-            db.query(EmotionalAnalysis).count(),
+            EmotionalAnalysisRepository.count_all(
+                db
+            ),
 
         "total_sessions":
             db.query(TherapySession).count()
@@ -102,11 +106,9 @@ def get_system_statistics(
             .count(),
 
         "archived_entries":
-            db.query(EmotionalEntry)
-            .filter(
-                EmotionalEntry.is_archived == True
-            )
-            .count(),
+            EmotionalEntryRepository.count_archived(
+                db
+            ),
 
         "generated_recommendations":
             db.query(PatientRecommendation)
@@ -206,7 +208,6 @@ def deactivate_user(
             detail="Usuario no encontrado"
         )
 
-    # No permitir desactivar la propia cuenta
     if user.id == current_admin_id:
         raise HTTPException(
             status_code=400,
@@ -219,7 +220,6 @@ def deactivate_user(
             detail="El usuario ya está desactivado"
         )
 
-    # Debe existir al menos un administrador activo
     if user.role == "ADMIN":
 
         active_admins = (

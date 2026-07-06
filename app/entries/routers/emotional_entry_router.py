@@ -20,6 +20,10 @@ from app.entries.models.emotional_entry import (
     EmotionalEntry
 )
 
+from app.entries.repositories.emotional_entry_repository import (
+    EmotionalEntryRepository
+)
+
 from app.entries.schemas.emotional_entry_create import (
     EmotionalEntryCreate
 )
@@ -60,11 +64,12 @@ def create_entry(
         text_content=entry.text_content
     )
 
-    db.add(emotional_entry)
-
-    db.commit()
-
-    db.refresh(emotional_entry)
+    emotional_entry = (
+        EmotionalEntryRepository.create(
+            db,
+            emotional_entry
+        )
+    )
 
     return emotional_entry
 
@@ -109,11 +114,12 @@ async def create_audio_entry(
         audio_path=file_path
     )
 
-    db.add(emotional_entry)
-
-    db.commit()
-
-    db.refresh(emotional_entry)
+    emotional_entry = (
+        EmotionalEntryRepository.create(
+            db,
+            emotional_entry
+        )
+    )
 
     return emotional_entry
 
@@ -133,19 +139,12 @@ def get_entries(
     )
 ):
 
-    entries = (
-        db.query(EmotionalEntry)
-        .filter(
-            EmotionalEntry.patient_id
-            == patient.id
+    return (
+        EmotionalEntryRepository.get_by_patient(
+            db,
+            patient.id
         )
-        .order_by(
-            EmotionalEntry.created_at.desc()
-        )
-        .all()
     )
-
-    return entries
 
 
 # =====================================
@@ -164,16 +163,15 @@ def get_entry(
     )
 ):
 
-    entry = (
-        db.query(EmotionalEntry)
-        .filter(
-            EmotionalEntry.id == entry_id,
-            EmotionalEntry.patient_id == patient.id
-        )
-        .first()
+    entry = EmotionalEntryRepository.get_by_id(
+        db,
+        entry_id
     )
 
-    if not entry:
+    if (
+        not entry
+        or entry.patient_id != patient.id
+    ):
         raise HTTPException(
             status_code=404,
             detail="Entrada no encontrada"
@@ -195,24 +193,24 @@ def archive_entry(
     )
 ):
 
-    entry = (
-        db.query(EmotionalEntry)
-        .filter(
-            EmotionalEntry.id == entry_id,
-            EmotionalEntry.patient_id == patient.id
-        )
-        .first()
+    entry = EmotionalEntryRepository.get_by_id(
+        db,
+        entry_id
     )
 
-    if not entry:
+    if (
+        not entry
+        or entry.patient_id != patient.id
+    ):
         raise HTTPException(
             status_code=404,
             detail="Entrada no encontrada"
         )
 
-    entry.is_archived = True
-
-    db.commit()
+    EmotionalEntryRepository.archive(
+        db,
+        entry
+    )
 
     return {
         "message": "Entrada archivada"

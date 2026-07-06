@@ -10,25 +10,34 @@ from app.entries.models.emotional_entry import (
     EmotionalEntry
 )
 
+from app.entries.repositories.emotional_entry_repository import (
+    EmotionalEntryRepository
+)
+
 from app.analysis.models.emotional_analysis import (
     EmotionalAnalysis
+)
+
+from app.analysis.repositories.emotional_analysis_repository import (
+    EmotionalAnalysisRepository
+)
+
+from app.analysis.repositories.transcription_repository import (
+    TranscriptionRepository
 )
 
 from app.analysis.services.fake_analysis_service import (
     analyze_text
 )
 
+from app.analysis.services.gemini_analysis_service import (
+    analyze_text_with_gemini
+)
+
 from app.shared.enums.entry_type_enum import (
     EntryTypeEnum
 )
 
-from app.analysis.models.audio_transcription import (
-    AudioTranscription
-)
-
-from app.analysis.services.gemini_analysis_service import (
-    analyze_text_with_gemini
-)
 
 def validate_entry_owner(
     entry: EmotionalEntry,
@@ -41,6 +50,7 @@ def validate_entry_owner(
             detail="No tienes permiso para acceder a esta entrada"
         )
 
+
 def create_analysis(
     entry_id: int,
     patient: PatientProfile,
@@ -48,12 +58,9 @@ def create_analysis(
     db: Session
 ):
 
-    entry = (
-        db.query(EmotionalEntry)
-        .filter(
-            EmotionalEntry.id == entry_id
-        )
-        .first()
+    entry = EmotionalEntryRepository.get_by_id(
+        db,
+        entry_id
     )
 
     if not entry:
@@ -68,11 +75,10 @@ def create_analysis(
     )
 
     existing = (
-        db.query(EmotionalAnalysis)
-        .filter(
-            EmotionalAnalysis.entry_id == entry_id
+        EmotionalAnalysisRepository.get_by_entry(
+            db,
+            entry_id
         )
-        .first()
     )
 
     if existing:
@@ -89,13 +95,10 @@ def create_analysis(
         analysis_json=data.analysis_json
     )
 
-    db.add(analysis)
-
-    db.commit()
-
-    db.refresh(analysis)
-
-    return analysis
+    return EmotionalAnalysisRepository.create(
+        db,
+        analysis
+    )
 
 
 def get_analysis(
@@ -105,11 +108,10 @@ def get_analysis(
 ):
 
     analysis = (
-        db.query(EmotionalAnalysis)
-        .filter(
-            EmotionalAnalysis.entry_id == entry_id
+        EmotionalAnalysisRepository.get_by_entry(
+            db,
+            entry_id
         )
-        .first()
     )
 
     if not analysis:
@@ -118,12 +120,9 @@ def get_analysis(
             detail="Análisis no encontrado"
         )
 
-    entry = (
-        db.query(EmotionalEntry)
-        .filter(
-            EmotionalEntry.id == entry_id
-        )
-        .first()
+    entry = EmotionalEntryRepository.get_by_id(
+        db,
+        entry_id
     )
 
     if not entry:
@@ -139,18 +138,16 @@ def get_analysis(
 
     return analysis
 
+
 def create_analysis_from_entry(
     entry_id: int,
     patient: PatientProfile,
     db: Session
 ):
 
-    entry = (
-        db.query(EmotionalEntry)
-        .filter(
-            EmotionalEntry.id == entry_id
-        )
-        .first()
+    entry = EmotionalEntryRepository.get_by_id(
+        db,
+        entry_id
     )
 
     if not entry:
@@ -168,11 +165,10 @@ def create_analysis_from_entry(
     elif entry.entry_type == EntryTypeEnum.AUDIO:
 
         transcription = (
-            db.query(AudioTranscription)
-            .filter(
-                AudioTranscription.entry_id == entry.id
+            TranscriptionRepository.get_by_entry(
+                db,
+                entry.id
             )
-            .first()
         )
 
         if not transcription:
@@ -203,11 +199,10 @@ def create_analysis_from_entry(
     )
 
     existing = (
-        db.query(EmotionalAnalysis)
-        .filter(
-            EmotionalAnalysis.entry_id == entry_id
+        EmotionalAnalysisRepository.get_by_entry(
+            db,
+            entry_id
         )
-        .first()
     )
 
     if existing:
@@ -238,10 +233,7 @@ def create_analysis_from_entry(
         analysis_json=result["analysis_json"]
     )
 
-    db.add(analysis)
-
-    db.commit()
-
-    db.refresh(analysis)
-
-    return analysis
+    return EmotionalAnalysisRepository.create(
+        db,
+        analysis
+    )

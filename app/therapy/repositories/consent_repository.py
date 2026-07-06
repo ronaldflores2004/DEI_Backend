@@ -69,3 +69,15 @@ class ConsentRepository:
         db.refresh(consent)
 
         return consent
+    
+    @staticmethod
+    def update(
+        db: Session,
+        consent: Consent,
+    ) -> Consent:
+
+        db.commit()
+
+        db.refresh(consent)
+
+        return consent

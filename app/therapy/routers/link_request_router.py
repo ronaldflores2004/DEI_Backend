@@ -16,7 +16,23 @@ from app.identity.models.professional_profile import (
     ProfessionalProfile
 )
 
+from app.identity.repositories.professional_repository import (
+    ProfessionalRepository
+)
+
 from app.therapy.models.link_request import LinkRequest
+
+from app.therapy.models.patient_professional import (
+    PatientProfessional
+)
+
+from app.therapy.repositories.link_request_repository import (
+    LinkRequestRepository
+)
+
+from app.therapy.repositories.patient_professional_repository import (
+    PatientProfessionalRepository
+)
 
 from app.therapy.schemas.link_request_create import (
     LinkRequestCreate
@@ -26,14 +42,12 @@ from app.therapy.schemas.link_request_response import (
     LinkRequestResponse
 )
 
-from app.therapy.models.patient_professional import (
-    PatientProfessional
-)
-
 router = APIRouter(
     prefix="/therapy/link-requests",
     tags=["Link Requests"]
 )
+
+
 @router.post(
     "",
     response_model=LinkRequestResponse
@@ -46,12 +60,9 @@ def create_link_request(
     )
 ):
 
-    professional = (
-        db.query(ProfessionalProfile)
-        .filter(
-            ProfessionalProfile.id == request.professional_id
-        )
-        .first()
+    professional = ProfessionalRepository.get_by_id(
+        db,
+        request.professional_id
     )
 
     if not professional:
@@ -67,13 +78,11 @@ def create_link_request(
         )
 
     existing_request = (
-        db.query(LinkRequest)
-        .filter(
-            LinkRequest.patient_id == patient.id,
-            LinkRequest.professional_id == professional.id,
-            LinkRequest.status == "PENDING"
+        LinkRequestRepository.get_pending_request(
+            db=db,
+            patient_id=patient.id,
+            professional_id=professional.id
         )
-        .first()
     )
 
     if existing_request:
@@ -81,15 +90,13 @@ def create_link_request(
             status_code=400,
             detail="Ya existe una solicitud pendiente"
         )
-    
+
     existing_relation = (
-        db.query(PatientProfessional)
-        .filter(
-            PatientProfessional.patient_id == patient.id,
-            PatientProfessional.professional_id == professional.id,
-            PatientProfessional.active == True
+        PatientProfessionalRepository.get_active_relation(
+            db=db,
+            patient_id=patient.id,
+            professional_id=professional.id
         )
-        .first()
     )
 
     if existing_relation:
@@ -104,15 +111,18 @@ def create_link_request(
         status="PENDING"
     )
 
-    db.add(link_request)
-
-    db.commit()
-
-    db.refresh(link_request)
+    link_request = LinkRequestRepository.create(
+        db,
+        link_request
+    )
 
     return link_request
 
-@router.get("/pending")
+
+@router.get(
+    "/pending",
+    response_model=list[LinkRequestResponse]
+)
 def get_pending_requests(
     db: Session = Depends(get_db),
     professional: ProfessionalProfile = Depends(
@@ -120,16 +130,13 @@ def get_pending_requests(
     )
 ):
 
-    requests = (
-        db.query(LinkRequest)
-        .filter(
-            LinkRequest.professional_id == professional.id,
-            LinkRequest.status == "PENDING"
+    return (
+        LinkRequestRepository.get_pending_by_professional(
+            db,
+            professional.id
         )
-        .all()
     )
 
-    return requests
 
 @router.patch("/{request_id}/accept")
 def accept_request(
@@ -140,12 +147,9 @@ def accept_request(
     )
 ):
 
-    link_request = (
-        db.query(LinkRequest)
-        .filter(
-            LinkRequest.id == request_id
-        )
-        .first()
+    link_request = LinkRequestRepository.get_by_id(
+        db,
+        request_id
     )
 
     if not link_request:
@@ -159,17 +163,13 @@ def accept_request(
             status_code=403,
             detail="Solicitud no pertenece a este profesional"
         )
-    
+
     existing_relation = (
-        db.query(PatientProfessional)
-        .filter(
-            PatientProfessional.patient_id
-            == link_request.patient_id,
-            PatientProfessional.professional_id
-            == professional.id,
-            PatientProfessional.active == True
+        PatientProfessionalRepository.get_active_relation(
+            db=db,
+            patient_id=link_request.patient_id,
+            professional_id=professional.id
         )
-        .first()
     )
 
     if existing_relation:
@@ -177,13 +177,13 @@ def accept_request(
             status_code=400,
             detail="La relación terapéutica ya existe"
         )
-    
+
     if link_request.status != "PENDING":
         raise HTTPException(
             status_code=400,
             detail="La solicitud ya fue procesada"
         )
-    
+
     link_request.status = "ACCEPTED"
 
     relationship = PatientProfessional(
@@ -193,9 +193,10 @@ def accept_request(
         active=True
     )
 
-    db.add(relationship)
-
-    db.commit()
+    PatientProfessionalRepository.create(
+        db,
+        relationship
+    )
 
     return {
         "message": "Solicitud aceptada"

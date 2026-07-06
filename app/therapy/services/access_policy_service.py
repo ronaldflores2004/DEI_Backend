@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
 
-from app.therapy.models.consent import Consent
+from app.therapy.repositories.consent_repository import (
+    ConsentRepository,
+)
 
 
 def has_active_consent(
@@ -9,14 +11,10 @@ def has_active_consent(
     db: Session
 ) -> bool:
 
-    consent = (
-        db.query(Consent)
-        .filter(
-            Consent.patient_id == patient_id,
-            Consent.professional_id == professional_id,
-            Consent.granted == True
-        )
-        .first()
+    consent = ConsentRepository.get_active(
+        db=db,
+        patient_id=patient_id,
+        professional_id=professional_id,
     )
 
     return consent is not None

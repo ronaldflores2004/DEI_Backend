@@ -2,16 +2,20 @@ from fastapi import HTTPException
 
 from sqlalchemy.orm import Session
 
-from app.identity.models.professional_profile import (
-    ProfessionalProfile
+from app.identity.repositories.professional_repository import (
+    ProfessionalRepository
 )
 
-from app.identity.models.patient_profile import (
-    PatientProfile
+from app.identity.repositories.patient_repository import (
+    PatientRepository
 )
 
-from app.therapy.models.patient_professional import (
-    PatientProfessional
+from app.therapy.repositories.patient_professional_repository import (
+    PatientProfessionalRepository
+)
+
+from app.sessions.repositories.therapy_session_repository import (
+    TherapySessionRepository
 )
 
 from app.sessions.models.therapy_session import (
@@ -26,6 +30,7 @@ from app.therapy.services.access_policy_service import (
     has_active_consent
 )
 
+
 def create_session(
     current_user_id: int,
     data,
@@ -33,12 +38,10 @@ def create_session(
 ):
 
     professional = (
-        db.query(ProfessionalProfile)
-        .filter(
-            ProfessionalProfile.user_id
-            == current_user_id
+        ProfessionalRepository.get_by_user_id(
+            db=db,
+            user_id=current_user_id
         )
-        .first()
     )
 
     if not professional:
@@ -48,12 +51,10 @@ def create_session(
         )
 
     patient = (
-        db.query(PatientProfile)
-        .filter(
-            PatientProfile.id
-            == data.patient_id
+        PatientRepository.get_by_id(
+            db=db,
+            patient_id=data.patient_id
         )
-        .first()
     )
 
     if not patient:
@@ -63,15 +64,11 @@ def create_session(
         )
 
     relation = (
-        db.query(PatientProfessional)
-        .filter(
-            PatientProfessional.patient_id
-            == patient.id,
-            PatientProfessional.professional_id
-            == professional.id,
-            PatientProfessional.active == True
+        PatientProfessionalRepository.get_active_relation(
+            db=db,
+            patient_id=patient.id,
+            professional_id=professional.id
         )
-        .first()
     )
 
     if not relation:
@@ -79,7 +76,7 @@ def create_session(
             status_code=403,
             detail="No tienes acceso a este paciente"
         )
-    
+
     if not has_active_consent(
         patient_id=patient.id,
         professional_id=professional.id,
@@ -97,8 +94,14 @@ def create_session(
         status="SCHEDULED"
     )
 
-    db.add(session)
+    session = (
+        TherapySessionRepository.create(
+            db=db,
+            session=session
+        )
+    )
 
+    # Se mantiene aquí hasta el Sprint Notifications
     notification = Notification(
         user_id=patient.user_id,
         title="Nueva sesión programada",
@@ -111,12 +114,10 @@ def create_session(
     )
 
     db.add(notification)
-
     db.commit()
 
-    db.refresh(session)
-
     return session
+
 
 def get_sessions(
     current_user_id: int,
@@ -124,12 +125,10 @@ def get_sessions(
 ):
 
     professional = (
-        db.query(ProfessionalProfile)
-        .filter(
-            ProfessionalProfile.user_id
-            == current_user_id
+        ProfessionalRepository.get_by_user_id(
+            db=db,
+            user_id=current_user_id
         )
-        .first()
     )
 
     if not professional:
@@ -138,16 +137,13 @@ def get_sessions(
             detail="No tienes perfil profesional"
         )
 
-    sessions = (
-        db.query(TherapySession)
-        .filter(
-            TherapySession.professional_id
-            == professional.id
+    return (
+        TherapySessionRepository.get_by_professional(
+            db=db,
+            professional_id=professional.id
         )
-        .all()
     )
 
-    return sessions
 
 def complete_session(
     session_id: int,
@@ -156,12 +152,10 @@ def complete_session(
 ):
 
     professional = (
-        db.query(ProfessionalProfile)
-        .filter(
-            ProfessionalProfile.user_id
-            == current_user_id
+        ProfessionalRepository.get_by_user_id(
+            db=db,
+            user_id=current_user_id
         )
-        .first()
     )
 
     if not professional:
@@ -171,12 +165,10 @@ def complete_session(
         )
 
     session = (
-        db.query(TherapySession)
-        .filter(
-            TherapySession.id
-            == session_id
+        TherapySessionRepository.get_by_id(
+            db=db,
+            session_id=session_id
         )
-        .first()
     )
 
     if not session:
@@ -190,7 +182,7 @@ def complete_session(
             status_code=403,
             detail="No tienes acceso a esta sesión"
         )
-    
+
     if session.status == "COMPLETED":
         raise HTTPException(
             status_code=400,
@@ -205,11 +197,12 @@ def complete_session(
 
     session.status = "COMPLETED"
 
-    db.commit()
-
-    db.refresh(session)
-
-    return session
+    return (
+        TherapySessionRepository.update(
+            db=db,
+            session=session
+        )
+    )
 
 
 def cancel_session(
@@ -219,12 +212,10 @@ def cancel_session(
 ):
 
     professional = (
-        db.query(ProfessionalProfile)
-        .filter(
-            ProfessionalProfile.user_id
-            == current_user_id
+        ProfessionalRepository.get_by_user_id(
+            db=db,
+            user_id=current_user_id
         )
-        .first()
     )
 
     if not professional:
@@ -234,12 +225,10 @@ def cancel_session(
         )
 
     session = (
-        db.query(TherapySession)
-        .filter(
-            TherapySession.id
-            == session_id
+        TherapySessionRepository.get_by_id(
+            db=db,
+            session_id=session_id
         )
-        .first()
     )
 
     if not session:
@@ -268,8 +257,9 @@ def cancel_session(
 
     session.status = "CANCELLED"
 
-    db.commit()
-
-    db.refresh(session)
-
-    return session
+    return (
+        TherapySessionRepository.update(
+            db=db,
+            session=session
+        )
+    )

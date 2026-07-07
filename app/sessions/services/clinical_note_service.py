@@ -2,12 +2,16 @@ from fastapi import HTTPException
 
 from sqlalchemy.orm import Session
 
-from app.identity.models.professional_profile import (
-    ProfessionalProfile
+from app.identity.repositories.professional_repository import (
+    ProfessionalRepository
 )
 
-from app.sessions.models.therapy_session import (
-    TherapySession
+from app.sessions.repositories.therapy_session_repository import (
+    TherapySessionRepository
+)
+
+from app.sessions.repositories.clinical_note_repository import (
+    ClinicalNoteRepository
 )
 
 from app.sessions.models.clinical_note import (
@@ -18,6 +22,7 @@ from app.therapy.services.access_policy_service import (
     has_active_consent
 )
 
+
 def create_note(
     session_id: int,
     current_user_id: int,
@@ -26,12 +31,10 @@ def create_note(
 ):
 
     professional = (
-        db.query(ProfessionalProfile)
-        .filter(
-            ProfessionalProfile.user_id
-            == current_user_id
+        ProfessionalRepository.get_by_user_id(
+            db=db,
+            user_id=current_user_id
         )
-        .first()
     )
 
     if not professional:
@@ -41,12 +44,10 @@ def create_note(
         )
 
     session = (
-        db.query(TherapySession)
-        .filter(
-            TherapySession.id
-            == session_id
+        TherapySessionRepository.get_by_id(
+            db=db,
+            session_id=session_id
         )
-        .first()
     )
 
     if not session:
@@ -60,6 +61,7 @@ def create_note(
             status_code=403,
             detail="No tienes acceso a esta sesión"
         )
+
     if not has_active_consent(
         patient_id=session.patient_id,
         professional_id=professional.id,
@@ -76,11 +78,12 @@ def create_note(
         note=data.note
     )
 
-    db.add(note)
-
-    db.commit()
-
-    db.refresh(note)
+    note = (
+        ClinicalNoteRepository.create(
+            db=db,
+            note=note
+        )
+    )
 
     return note
 
@@ -92,12 +95,10 @@ def get_notes(
 ):
 
     professional = (
-        db.query(ProfessionalProfile)
-        .filter(
-            ProfessionalProfile.user_id
-            == current_user_id
+        ProfessionalRepository.get_by_user_id(
+            db=db,
+            user_id=current_user_id
         )
-        .first()
     )
 
     if not professional:
@@ -107,12 +108,10 @@ def get_notes(
         )
 
     session = (
-        db.query(TherapySession)
-        .filter(
-            TherapySession.id
-            == session_id
+        TherapySessionRepository.get_by_id(
+            db=db,
+            session_id=session_id
         )
-        .first()
     )
 
     if not session:
@@ -126,7 +125,7 @@ def get_notes(
             status_code=403,
             detail="No tienes acceso a esta sesión"
         )
-    
+
     if not has_active_consent(
         patient_id=session.patient_id,
         professional_id=professional.id,
@@ -137,13 +136,9 @@ def get_notes(
             detail="No existe consentimiento activo"
         )
 
-    notes = (
-        db.query(ClinicalNote)
-        .filter(
-            ClinicalNote.session_id
-            == session_id
+    return (
+        ClinicalNoteRepository.get_by_session(
+            db=db,
+            session_id=session_id
         )
-        .all()
     )
-
-    return notes

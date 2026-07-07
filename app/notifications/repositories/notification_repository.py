@@ -96,3 +96,13 @@ class NotificationRepository:
         db.refresh(notification)
 
         return notification
+    
+    @staticmethod
+    def count_all(
+        db: Session,
+    ) -> int:
+
+        return (
+            db.query(Notification)
+            .count()
+        )

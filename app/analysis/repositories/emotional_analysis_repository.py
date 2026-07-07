@@ -189,3 +189,28 @@ class EmotionalAnalysisRepository:
             db.query(EmotionalAnalysis)
             .count()
         )
+    # =====================================
+    # OBTENER ANÁLISIS CON ENTRADAS
+    # =====================================
+
+    @staticmethod
+    def get_with_entries(
+        db: Session,
+    ) -> list[tuple]:
+
+        from app.entries.models.emotional_entry import (
+            EmotionalEntry
+        )
+
+        return (
+            db.query(
+                EmotionalAnalysis,
+                EmotionalEntry
+            )
+            .join(
+                EmotionalEntry,
+                EmotionalAnalysis.entry_id
+                == EmotionalEntry.id
+            )
+            .all()
+        )

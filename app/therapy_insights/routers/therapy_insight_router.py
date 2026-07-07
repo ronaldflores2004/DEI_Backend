@@ -9,14 +9,6 @@ from app.core.dependencies import get_current_user
 
 from app.identity.models.user import User
 
-from app.identity.models.professional_profile import (
-    ProfessionalProfile
-)
-
-from app.therapy.models.patient_professional import (
-    PatientProfessional
-)
-
 from app.therapy_insights.schemas.therapy_insight_response import (
     TherapyInsightResponse
 )
@@ -27,6 +19,14 @@ from app.therapy_insights.services.insight_generator_service import (
 
 from app.therapy.services.access_policy_service import (
     has_active_consent
+)
+
+from app.identity.repositories.professional_repository import (
+    ProfessionalRepository
+)
+
+from app.therapy.repositories.patient_professional_repository import (
+    PatientProfessionalRepository
 )
 
 router = APIRouter(
@@ -46,11 +46,10 @@ def get_patient_insights(
 ):
 
     professional = (
-        db.query(ProfessionalProfile)
-        .filter(
-            ProfessionalProfile.user_id == current_user.id
+        ProfessionalRepository.get_by_user_id(
+            db=db,
+            user_id=current_user.id
         )
-        .first()
     )
 
     if not professional:
@@ -60,13 +59,11 @@ def get_patient_insights(
         )
 
     relation = (
-        db.query(PatientProfessional)
-        .filter(
-            PatientProfessional.patient_id == patient_id,
-            PatientProfessional.professional_id == professional.id,
-            PatientProfessional.active == True
+        PatientProfessionalRepository.get_active_relation(
+            db=db,
+            patient_id=patient_id,
+            professional_id=professional.id
         )
-        .first()
     )
 
     if not relation:

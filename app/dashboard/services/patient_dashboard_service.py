@@ -8,8 +8,8 @@ from app.entries.repositories.emotional_entry_repository import (
     EmotionalEntryRepository
 )
 
-from app.recommendations.models.patient_recommendation import (
-    PatientRecommendation
+from app.recommendations.repositories.patient_recommendation_repository import (
+    PatientRecommendationRepository
 )
 
 from app.analysis.services.weekly_summary_service import (
@@ -36,15 +36,10 @@ def get_patient_dashboard(
     # =====================================
 
     latest_recommendation = (
-        db.query(PatientRecommendation)
-        .filter(
-            PatientRecommendation.patient_id
-            == patient.id
+        PatientRecommendationRepository.get_latest_by_patient(
+            db=db,
+            patient_id=patient.id
         )
-        .order_by(
-            PatientRecommendation.created_at.desc()
-        )
-        .first()
     )
 
     # =====================================

@@ -8,8 +8,8 @@ from app.core.dependencies import get_current_user
 
 from app.identity.models.user import User
 
-from app.identity.models.professional_profile import (
-    ProfessionalProfile
+from app.identity.repositories.professional_repository import (
+    ProfessionalRepository
 )
 
 from app.risk_alerts.schemas.risk_alert_response import (
@@ -36,11 +36,10 @@ def risk_alerts(
 ):
 
     professional = (
-        db.query(ProfessionalProfile)
-        .filter(
-            ProfessionalProfile.user_id == current_user.id
+        ProfessionalRepository.get_by_user_id(
+            db=db,
+            user_id=current_user.id
         )
-        .first()
     )
 
     if not professional:

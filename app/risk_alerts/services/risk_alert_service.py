@@ -2,16 +2,12 @@ from collections import defaultdict
 
 from sqlalchemy.orm import Session
 
-from app.entries.models.emotional_entry import (
-    EmotionalEntry
+from app.analysis.repositories.emotional_analysis_repository import (
+    EmotionalAnalysisRepository
 )
 
-from app.analysis.models.emotional_analysis import (
-    EmotionalAnalysis
-)
-
-from app.therapy.models.patient_professional import (
-    PatientProfessional
+from app.therapy.repositories.patient_professional_repository import (
+    PatientProfessionalRepository
 )
 
 from app.therapy.services.access_policy_service import (
@@ -29,13 +25,10 @@ def get_risk_alerts(
     # =====================================
 
     patient_relations = (
-        db.query(PatientProfessional)
-        .filter(
-            PatientProfessional.professional_id
-            == professional_id,
-            PatientProfessional.active == True
+        PatientProfessionalRepository.get_active_by_professional(
+            db=db,
+            professional_id=professional_id
         )
-        .all()
     )
 
     allowed_patients = set()
@@ -56,16 +49,9 @@ def get_risk_alerts(
     # =====================================
 
     analyses = (
-        db.query(
-            EmotionalAnalysis,
-            EmotionalEntry
+        EmotionalAnalysisRepository.get_with_entries(
+            db
         )
-        .join(
-            EmotionalEntry,
-            EmotionalAnalysis.entry_id
-            == EmotionalEntry.id
-        )
-        .all()
     )
 
     patient_data = defaultdict(list)

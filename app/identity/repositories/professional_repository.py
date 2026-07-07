@@ -7,7 +7,8 @@ from app.identity.models.professional_profile import (
 
 class ProfessionalRepository:
     """
-    Repositorio para el acceso a datos de ProfessionalProfile.
+    Repositorio para el acceso a datos de
+    ProfessionalProfile.
     """
 
     @staticmethod
@@ -52,17 +53,69 @@ class ProfessionalRepository:
         )
 
     @staticmethod
+    def get_all(
+        db: Session,
+    ) -> list[ProfessionalProfile]:
+
+        return (
+            db.query(ProfessionalProfile)
+            .order_by(
+                ProfessionalProfile.last_name,
+                ProfessionalProfile.first_name
+            )
+            .all()
+        )
+
+    @staticmethod
+    def count_all(
+        db: Session,
+    ) -> int:
+
+        return (
+            db.query(ProfessionalProfile)
+            .count()
+        )
+
+    @staticmethod
+    def count_verified(
+        db: Session,
+    ) -> int:
+
+        return (
+            db.query(ProfessionalProfile)
+            .filter(
+                ProfessionalProfile.is_verified == True
+            )
+            .count()
+        )
+
+    @staticmethod
+    def count_pending(
+        db: Session,
+    ) -> int:
+
+        return (
+            db.query(ProfessionalProfile)
+            .filter(
+                ProfessionalProfile.is_verified == False
+            )
+            .count()
+        )
+
+    @staticmethod
     def create(
         db: Session,
         profile: ProfessionalProfile,
     ) -> ProfessionalProfile:
 
         db.add(profile)
+
         db.commit()
+
         db.refresh(profile)
 
         return profile
-    
+
     @staticmethod
     def update(
         db: Session,

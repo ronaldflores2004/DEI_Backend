@@ -62,3 +62,13 @@ class PatientRepository:
         db.refresh(profile)
 
         return profile
+    
+    @staticmethod
+    def count_all(
+        db: Session,
+    ) -> int:
+
+        return (
+            db.query(PatientProfile)
+            .count()
+        )

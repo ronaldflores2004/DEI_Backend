@@ -26,6 +26,10 @@ from app.notifications.models.notification import (
     Notification
 )
 
+from app.notifications.repositories.notification_repository import (
+    NotificationRepository
+)
+
 from app.therapy.services.access_policy_service import (
     has_active_consent
 )
@@ -113,8 +117,10 @@ def create_session(
         type="SESSION"
     )
 
-    db.add(notification)
-    db.commit()
+    NotificationRepository.create(
+        db=db,
+        notification=notification
+    )
 
     return session
 

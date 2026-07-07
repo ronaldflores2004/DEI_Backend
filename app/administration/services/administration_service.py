@@ -2,14 +2,16 @@ from fastapi import HTTPException
 
 from sqlalchemy.orm import Session
 
-from app.identity.models.user import User
-
-from app.identity.models.patient_profile import (
-    PatientProfile
+from app.identity.repositories.user_repository import (
+    UserRepository
 )
 
-from app.identity.models.professional_profile import (
-    ProfessionalProfile
+from app.identity.repositories.patient_repository import (
+    PatientRepository
+)
+
+from app.identity.repositories.professional_repository import (
+    ProfessionalRepository
 )
 
 from app.entries.repositories.emotional_entry_repository import (
@@ -20,16 +22,16 @@ from app.analysis.repositories.emotional_analysis_repository import (
     EmotionalAnalysisRepository
 )
 
-from app.sessions.models.therapy_session import (
-    TherapySession
+from app.sessions.repositories.therapy_session_repository import (
+    TherapySessionRepository
 )
 
-from app.notifications.models.notification import (
-    Notification
+from app.notifications.repositories.notification_repository import (
+    NotificationRepository
 )
 
-from app.recommendations.models.patient_recommendation import (
-    PatientRecommendation
+from app.recommendations.repositories.patient_recommendation_repository import (
+    PatientRecommendationRepository
 )
 
 
@@ -44,27 +46,29 @@ def get_admin_dashboard(
     return {
 
         "total_users":
-            db.query(User).count(),
+            UserRepository.count_all(
+                db
+            ),
 
         "total_patients":
-            db.query(PatientProfile).count(),
+            PatientRepository.count_all(
+                db
+            ),
 
         "total_professionals":
-            db.query(ProfessionalProfile).count(),
+            ProfessionalRepository.count_all(
+                db
+            ),
 
         "verified_professionals":
-            db.query(ProfessionalProfile)
-            .filter(
-                ProfessionalProfile.is_verified == True
-            )
-            .count(),
+            ProfessionalRepository.count_verified(
+                db
+            ),
 
         "pending_professionals":
-            db.query(ProfessionalProfile)
-            .filter(
-                ProfessionalProfile.is_verified == False
-            )
-            .count(),
+            ProfessionalRepository.count_pending(
+                db
+            ),
 
         "total_entries":
             EmotionalEntryRepository.count_all(
@@ -77,7 +81,9 @@ def get_admin_dashboard(
             ),
 
         "total_sessions":
-            db.query(TherapySession).count()
+            TherapySessionRepository.count_all(
+                db
+            )
     }
 
 
@@ -92,18 +98,14 @@ def get_system_statistics(
     return {
 
         "active_users":
-            db.query(User)
-            .filter(
-                User.is_active == True
-            )
-            .count(),
+            UserRepository.count_active(
+                db
+            ),
 
         "inactive_users":
-            db.query(User)
-            .filter(
-                User.is_active == False
-            )
-            .count(),
+            UserRepository.count_inactive(
+                db
+            ),
 
         "archived_entries":
             EmotionalEntryRepository.count_archived(
@@ -111,12 +113,14 @@ def get_system_statistics(
             ),
 
         "generated_recommendations":
-            db.query(PatientRecommendation)
-            .count(),
+            PatientRecommendationRepository.count_all(
+                db
+            ),
 
         "notifications_sent":
-            db.query(Notification)
-            .count()
+            NotificationRepository.count_all(
+                db
+            )
     }
 
 
@@ -129,11 +133,9 @@ def get_users(
 ):
 
     return (
-        db.query(User)
-        .order_by(
-            User.email
+        UserRepository.get_all(
+            db
         )
-        .all()
     )
 
 
@@ -147,11 +149,10 @@ def activate_user(
 ):
 
     user = (
-        db.query(User)
-        .filter(
-            User.id == user_id
+        UserRepository.get_by_id(
+            db,
+            user_id
         )
-        .first()
     )
 
     if not user:
@@ -168,9 +169,10 @@ def activate_user(
 
     user.is_active = True
 
-    db.commit()
-
-    db.refresh(user)
+    UserRepository.update(
+        db,
+        user
+    )
 
     return {
 
@@ -195,11 +197,10 @@ def deactivate_user(
 ):
 
     user = (
-        db.query(User)
-        .filter(
-            User.id == user_id
+        UserRepository.get_by_id(
+            db,
+            user_id
         )
-        .first()
     )
 
     if not user:
@@ -223,12 +224,9 @@ def deactivate_user(
     if user.role == "ADMIN":
 
         active_admins = (
-            db.query(User)
-            .filter(
-                User.role == "ADMIN",
-                User.is_active == True
+            UserRepository.count_active_admins(
+                db
             )
-            .count()
         )
 
         if active_admins <= 1:
@@ -242,9 +240,10 @@ def deactivate_user(
 
     user.is_active = False
 
-    db.commit()
-
-    db.refresh(user)
+    UserRepository.update(
+        db,
+        user
+    )
 
     return {
 
@@ -267,12 +266,9 @@ def get_professionals(
 ):
 
     return (
-        db.query(ProfessionalProfile)
-        .order_by(
-            ProfessionalProfile.last_name,
-            ProfessionalProfile.first_name
+        ProfessionalRepository.get_all(
+            db
         )
-        .all()
     )
 
 
@@ -286,11 +282,10 @@ def verify_professional(
 ):
 
     professional = (
-        db.query(ProfessionalProfile)
-        .filter(
-            ProfessionalProfile.id == professional_id
+        ProfessionalRepository.get_by_id(
+            db,
+            professional_id
         )
-        .first()
     )
 
     if not professional:
@@ -307,9 +302,10 @@ def verify_professional(
 
     professional.is_verified = True
 
-    db.commit()
-
-    db.refresh(professional)
+    ProfessionalRepository.update(
+        db,
+        professional
+    )
 
     return {
 

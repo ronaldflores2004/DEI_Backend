@@ -70,3 +70,65 @@ class UserRepository:
             .order_by(User.email)
             .all()
         )
+
+    @staticmethod
+    def count_all(
+        db: Session
+    ) -> int:
+
+        return (
+            db.query(User)
+            .count()
+        )
+
+    @staticmethod
+    def count_active(
+        db: Session
+    ) -> int:
+
+        return (
+            db.query(User)
+            .filter(
+                User.is_active == True
+            )
+            .count()
+        )
+
+    @staticmethod
+    def count_inactive(
+        db: Session
+    ) -> int:
+
+        return (
+            db.query(User)
+            .filter(
+                User.is_active == False
+            )
+            .count()
+        )
+
+    @staticmethod
+    def count_active_admins(
+        db: Session
+    ) -> int:
+
+        return (
+            db.query(User)
+            .filter(
+                User.role == "ADMIN",
+                User.is_active == True
+            )
+            .count()
+        )
+
+    @staticmethod
+    def update(
+        db: Session,
+        user: User
+    ) -> User:
+
+        db.commit()
+
+        db.refresh(user)
+
+        return user

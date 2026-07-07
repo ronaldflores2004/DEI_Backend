@@ -2,8 +2,8 @@ from fastapi import HTTPException
 
 from sqlalchemy.orm import Session
 
-from app.notifications.models.notification import (
-    Notification
+from app.notifications.repositories.notification_repository import (
+    NotificationRepository
 )
 
 
@@ -12,19 +12,12 @@ def get_notifications(
     db: Session
 ):
 
-    notifications = (
-        db.query(Notification)
-        .filter(
-            Notification.user_id
-            == current_user_id
+    return (
+        NotificationRepository.get_by_user(
+            db=db,
+            user_id=current_user_id
         )
-        .order_by(
-            Notification.created_at.desc()
-        )
-        .all()
     )
-
-    return notifications
 
 
 def mark_as_read(
@@ -34,12 +27,10 @@ def mark_as_read(
 ):
 
     notification = (
-        db.query(Notification)
-        .filter(
-            Notification.id
-            == notification_id
+        NotificationRepository.get_by_id(
+            db=db,
+            notification_id=notification_id
         )
-        .first()
     )
 
     if not notification:
@@ -56,11 +47,13 @@ def mark_as_read(
 
     notification.is_read = True
 
-    db.commit()
+    return (
+        NotificationRepository.update(
+            db=db,
+            notification=notification
+        )
+    )
 
-    db.refresh(notification)
-
-    return notification
 
 def get_notification_summary(
     current_user_id: int,
@@ -68,25 +61,24 @@ def get_notification_summary(
 ):
 
     total = (
-        db.query(Notification)
-        .filter(
-            Notification.user_id
-            == current_user_id
+        NotificationRepository.count_by_user(
+            db=db,
+            user_id=current_user_id
         )
-        .count()
     )
 
     unread = (
-        db.query(Notification)
-        .filter(
-            Notification.user_id
-            == current_user_id,
-            Notification.is_read == False
+        NotificationRepository.count_unread(
+            db=db,
+            user_id=current_user_id
         )
-        .count()
     )
 
     return {
-        "total": total,
-        "unread": unread
+
+        "total":
+            total,
+
+        "unread":
+            unread
     }

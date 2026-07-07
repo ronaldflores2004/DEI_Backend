@@ -18,6 +18,10 @@ from app.recommendations.models.patient_recommendation import (
     PatientRecommendation
 )
 
+from app.recommendations.repositories.patient_recommendation_repository import (
+    PatientRecommendationRepository
+)
+
 from app.recommendations.services.recommendation_generator_service import (
     generate_recommendation
 )
@@ -85,12 +89,10 @@ def generate_from_analysis(
     # =====================================
 
     existing = (
-        db.query(PatientRecommendation)
-        .filter(
-            PatientRecommendation.analysis_id
-            == analysis_id
+        PatientRecommendationRepository.get_by_analysis(
+            db=db,
+            analysis_id=analysis_id
         )
-        .first()
     )
 
     if existing:
@@ -114,10 +116,11 @@ def generate_from_analysis(
         source="AI"
     )
 
-    db.add(recommendation)
-
-    db.commit()
-
-    db.refresh(recommendation)
+    recommendation = (
+        PatientRecommendationRepository.create(
+            db=db,
+            recommendation=recommendation
+        )
+    )
 
     return recommendation

@@ -8,6 +8,10 @@ from app.recommendations.models.patient_recommendation import (
     PatientRecommendation
 )
 
+from app.recommendations.repositories.patient_recommendation_repository import (
+    PatientRecommendationRepository
+)
+
 
 # =====================================
 # Crear recomendación manual
@@ -21,16 +25,18 @@ def create_recommendation(
 
     recommendation = PatientRecommendation(
         patient_id=patient.id,
+        analysis_id=data.analysis_id,
         title=data.title,
         content=data.content,
         source=data.source
     )
 
-    db.add(recommendation)
-
-    db.commit()
-
-    db.refresh(recommendation)
+    recommendation = (
+        PatientRecommendationRepository.create(
+            db=db,
+            recommendation=recommendation
+        )
+    )
 
     return recommendation
 
@@ -45,13 +51,8 @@ def get_my_recommendations(
 ):
 
     return (
-        db.query(PatientRecommendation)
-        .filter(
-            PatientRecommendation.patient_id
-            == patient.id
+        PatientRecommendationRepository.get_by_patient(
+            db=db,
+            patient_id=patient.id
         )
-        .order_by(
-            PatientRecommendation.created_at.desc()
-        )
-        .all()
     )

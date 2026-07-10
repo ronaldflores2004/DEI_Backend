@@ -41,10 +41,11 @@ router = APIRouter(
 # =====================================
 
 @router.post(
-    "",
+    "/analysis/{analysis_id}",
     response_model=PatientRecommendationResponse
 )
 def create(
+    analysis_id: int,
     data: PatientRecommendationCreate,
     db: Session = Depends(get_db),
     patient: PatientProfile = Depends(
@@ -53,6 +54,7 @@ def create(
 ):
 
     return create_recommendation(
+        analysis_id=analysis_id,
         patient=patient,
         data=data,
         db=db

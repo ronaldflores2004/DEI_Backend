@@ -5,8 +5,11 @@ from sqlalchemy import (
     Integer,
     String,
     DateTime,
-    ForeignKey
+    ForeignKey,
+    Index
 )
+
+from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
@@ -14,6 +17,17 @@ from app.core.database import Base
 class LinkRequest(Base):
 
     __tablename__ = "link_requests"
+    
+    __table_args__ = (
+
+        Index(
+            "ix_link_request_patient_professional_status",
+            "patient_id",
+            "professional_id",
+            "status"
+        ),
+
+    )
 
     id = Column(
         Integer,
@@ -42,4 +56,12 @@ class LinkRequest(Base):
     created_at = Column(
         DateTime,
         default=datetime.utcnow
+    )
+    
+    patient = relationship(
+        "PatientProfile"
+    )
+
+    professional = relationship(
+        "ProfessionalProfile"
     )

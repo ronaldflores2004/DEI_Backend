@@ -52,3 +52,15 @@ class TranscriptionRepository:
         db.refresh(transcription)
 
         return transcription
+    
+    @staticmethod
+    def update(
+        db: Session,
+        transcription: AudioTranscription,
+    ) -> AudioTranscription:
+
+        db.commit()
+
+        db.refresh(transcription)
+
+        return transcription

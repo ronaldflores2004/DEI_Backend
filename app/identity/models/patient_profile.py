@@ -9,6 +9,8 @@ from sqlalchemy import (
     ForeignKey
 )
 
+from sqlalchemy.orm import relationship
+
 from app.core.database import Base
 
 
@@ -52,4 +54,34 @@ class PatientProfile(Base):
     created_at = Column(
         DateTime,
         default=datetime.utcnow
+    )
+    
+    user = relationship(
+        "User",
+        back_populates="patient_profile"
+    )
+
+    entries = relationship(
+        "EmotionalEntry",
+        back_populates="patient"
+    )
+
+    sessions = relationship(
+        "TherapySession",
+        back_populates="patient"
+    )
+
+    recommendations = relationship(
+        "PatientRecommendation",
+        back_populates="patient"
+    )
+
+    relations = relationship(
+        "PatientProfessional",
+        back_populates="patient"
+    )
+
+    consents = relationship(
+        "Consent",
+        back_populates="patient"
     )

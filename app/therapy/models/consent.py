@@ -5,8 +5,11 @@ from sqlalchemy import (
     Integer,
     Boolean,
     DateTime,
-    ForeignKey
+    ForeignKey,
+    Index
 )
+
+from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
@@ -14,6 +17,16 @@ from app.core.database import Base
 class Consent(Base):
 
     __tablename__ = "consents"
+    
+    __table_args__ = (
+
+        Index(
+            "ix_consent_patient_professional",
+            "patient_id",
+            "professional_id"
+        ),
+
+    )
 
     id = Column(
         Integer,
@@ -46,4 +59,14 @@ class Consent(Base):
     revoked_at = Column(
         DateTime,
         nullable=True
+    )
+    
+    patient = relationship(
+        "PatientProfile",
+        back_populates="consents"
+    )
+
+    professional = relationship(
+        "ProfessionalProfile",
+        back_populates="consents"
     )

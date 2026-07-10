@@ -9,6 +9,8 @@ from sqlalchemy import (
     ForeignKey
 )
 
+from sqlalchemy.orm import relationship
+
 from app.core.database import Base
 
 
@@ -41,4 +43,15 @@ class AudioTranscription(Base):
     created_at = Column(
         DateTime,
         default=datetime.utcnow
+    )
+    
+    updated_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+    
+    entry = relationship(
+        "EmotionalEntry",
+        back_populates="transcription"
     )

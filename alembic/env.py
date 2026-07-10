@@ -5,9 +5,51 @@ from sqlalchemy import pool
 
 from alembic import context
 
+import sys
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parents[1]
+sys.path.append(str(BASE_DIR))
+
+from app.core.config import settings
+from app.core.database import Base
+
+
+# Identity
+import app.identity.models.user
+import app.identity.models.patient_profile
+import app.identity.models.professional_profile
+
+# Therapy
+import app.therapy.models.patient_professional
+import app.therapy.models.link_request
+import app.therapy.models.consent
+
+# Entries
+import app.entries.models.emotional_entry
+
+# Analysis
+import app.analysis.models.audio_transcription
+import app.analysis.models.emotional_analysis
+
+# Recommendations
+import app.recommendations.models.patient_recommendation
+
+# Sessions
+import app.sessions.models.therapy_session
+import app.sessions.models.clinical_note
+
+# Notifications
+import app.notifications.models.notification
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+config.set_main_option(
+    "sqlalchemy.url",
+    settings.DATABASE_URL
+)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -18,7 +60,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -65,7 +107,10 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+            compare_server_default=True
         )
 
         with context.begin_transaction():

@@ -7,8 +7,11 @@ from sqlalchemy import (
     Text,
     Boolean,
     DateTime,
-    ForeignKey
+    ForeignKey,
+    Index
 )
+
+from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
@@ -16,6 +19,22 @@ from app.core.database import Base
 class EmotionalEntry(Base):
 
     __tablename__ = "emotional_entries"
+    
+    __table_args__ = (
+
+        Index(
+            "ix_entries_patient_created",
+            "patient_id",
+            "created_at"
+        ),
+
+        Index(
+            "ix_entries_patient_type",
+            "patient_id",
+            "entry_type"
+        ),
+
+    )
 
     id = Column(
         Integer,
@@ -58,4 +77,21 @@ class EmotionalEntry(Base):
         DateTime,
         default=datetime.utcnow,
         onupdate=datetime.utcnow
+    )
+    
+    patient = relationship(
+        "PatientProfile",
+        back_populates="entries"
+    )
+
+    analysis = relationship(
+        "EmotionalAnalysis",
+        back_populates="entry",
+        uselist=False
+    )
+
+    transcription = relationship(
+        "AudioTranscription",
+        back_populates="entry",
+        uselist=False
     )

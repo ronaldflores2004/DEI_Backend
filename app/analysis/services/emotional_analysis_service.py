@@ -1,5 +1,7 @@
 from fastapi import HTTPException
 
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 
 from app.identity.models.patient_profile import (
@@ -200,13 +202,10 @@ def create_analysis_from_entry(
 
     existing = (
         EmotionalAnalysisRepository.get_by_entry(
-            db,
-            entry_id
+            db=db,
+            entry_id=entry_id
         )
     )
-
-    if existing:
-        return existing
 
     try:
 
@@ -223,6 +222,37 @@ def create_analysis_from_entry(
 
         result = analyze_text(
             text_to_analyze
+        )
+
+    if existing:
+        
+        existing.entry_id = entry.id
+
+        existing.primary_emotion = (
+            result["primary_emotion"]
+        )
+
+        existing.emotion_intensity = (
+            result["emotion_intensity"]
+        )
+
+        existing.risk_level = (
+            result["risk_level"]
+        )
+
+        existing.analysis_json = (
+            result["analysis_json"]
+        )
+
+        existing.analyzed_at = (
+            datetime.utcnow()
+        )
+
+        return (
+            EmotionalAnalysisRepository.update(
+                db=db,
+                analysis=existing
+            )
         )
 
     analysis = EmotionalAnalysis(

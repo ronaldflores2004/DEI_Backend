@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from datetime import datetime
 
+from sqlalchemy.orm import relationship
+
 from app.core.database import Base
 
 
@@ -23,4 +25,20 @@ class User(Base):
         DateTime,
         default=datetime.utcnow,
         onupdate=datetime.utcnow
+    )
+    patient_profile = relationship(
+        "PatientProfile",
+        back_populates="user",
+        uselist=False
+    )
+
+    professional_profile = relationship(
+        "ProfessionalProfile",
+        back_populates="user",
+        uselist=False
+    )
+
+    notifications = relationship(
+        "Notification",
+        back_populates="user"
     )

@@ -111,6 +111,27 @@ def auto_analyze(
         db=db
     )
 
+# =====================================
+# Reanalizar entrada con IA
+# =====================================
+
+@router.post(
+    "/entries/{entry_id}/reanalyze",
+    response_model=EmotionalAnalysisResponse
+)
+def reanalyze(
+    entry_id: int,
+    db: Session = Depends(get_db),
+    patient: PatientProfile = Depends(
+        get_current_patient_profile
+    )
+):
+
+    return create_analysis_from_entry(
+        entry_id=entry_id,
+        patient=patient,
+        db=db
+    )
 
 # =====================================
 # Resumen semanal

@@ -62,6 +62,22 @@ class EmotionalAnalysisRepository:
         db.refresh(analysis)
 
         return analysis
+    
+    # =====================================
+    # ACTUALIZAR ANÁLISIS
+    # =====================================
+    
+    @staticmethod
+    def update(
+        db: Session,
+        analysis: EmotionalAnalysis,
+    ) -> EmotionalAnalysis:
+
+        db.commit()
+
+        db.refresh(analysis)
+
+        return analysis
 
     # =====================================
     # CONSULTAS DE DOMINIO
@@ -214,3 +230,4 @@ class EmotionalAnalysisRepository:
             )
             .all()
         )
+        

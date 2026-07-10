@@ -6,8 +6,11 @@ from sqlalchemy import (
     String,
     Text,
     DateTime,
-    ForeignKey
+    ForeignKey,
+    Index
 )
+
+from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
@@ -15,6 +18,21 @@ from app.core.database import Base
 class PatientRecommendation(Base):
 
     __tablename__ = "patient_recommendations"
+    
+    __table_args__ = (
+
+        Index(
+            "ix_patient_recommendation_patient",
+            "patient_id"
+        ),
+
+        Index(
+            "ix_patient_recommendation_analysis",
+            "analysis_id",
+            unique=True
+        ),
+
+    )
 
     id = Column(
         Integer,
@@ -52,4 +70,14 @@ class PatientRecommendation(Base):
     created_at = Column(
         DateTime,
         default=datetime.utcnow
+    )
+    
+    patient = relationship(
+        "PatientProfile",
+        back_populates="recommendations"
+    )
+
+    analysis = relationship(
+        "EmotionalAnalysis",
+        back_populates="recommendations"
     )

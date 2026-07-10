@@ -6,8 +6,11 @@ from sqlalchemy import (
     String,
     DateTime,
     ForeignKey,
+    Index,
     JSON
 )
+
+from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
@@ -15,6 +18,20 @@ from app.core.database import Base
 class EmotionalAnalysis(Base):
 
     __tablename__ = "emotional_analyses"
+    
+    __table_args__ = (
+
+        Index(
+            "ix_emotional_analysis_entry",
+            "entry_id"
+        ),
+
+        Index(
+            "ix_emotional_analysis_risk",
+            "risk_level"
+        ),
+
+    )
 
     id = Column(
         Integer,
@@ -51,4 +68,14 @@ class EmotionalAnalysis(Base):
     analyzed_at = Column(
         DateTime,
         default=datetime.utcnow
+    )
+    
+    entry = relationship(
+        "EmotionalEntry",
+        back_populates="analysis"
+    )
+
+    recommendations = relationship(
+        "PatientRecommendation",
+        back_populates="analysis"
     )

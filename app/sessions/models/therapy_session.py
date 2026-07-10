@@ -8,6 +8,8 @@ from sqlalchemy import (
     ForeignKey
 )
 
+from sqlalchemy.orm import relationship
+
 from app.core.database import Base
 
 
@@ -47,4 +49,19 @@ class TherapySession(Base):
     created_at = Column(
         DateTime,
         default=datetime.utcnow
+    )
+    
+    patient = relationship(
+        "PatientProfile",
+        back_populates="sessions"
+    )
+
+    professional = relationship(
+        "ProfessionalProfile",
+        back_populates="sessions"
+    )
+
+    clinical_notes = relationship(
+        "ClinicalNote",
+        back_populates="session"
     )

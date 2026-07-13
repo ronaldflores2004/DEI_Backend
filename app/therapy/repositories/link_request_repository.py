@@ -8,6 +8,7 @@ from app.shared.enums.link_request_status_enum import (
     LinkRequestStatusEnum
 )
 
+
 class LinkRequestRepository:
     """
     Repositorio para el acceso a datos de
@@ -81,6 +82,18 @@ class LinkRequestRepository:
     ) -> LinkRequest:
 
         db.add(request)
+
+        db.commit()
+
+        db.refresh(request)
+
+        return request
+    
+    @staticmethod
+    def update(
+        db: Session,
+        request: LinkRequest,
+    ) -> LinkRequest:
 
         db.commit()
 

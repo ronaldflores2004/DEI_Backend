@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
 from sqlalchemy.orm import Session
@@ -7,18 +7,14 @@ from app.core.database import get_db
 
 from app.identity.models.user import User
 
-from app.identity.repositories.user_repository import (
-    UserRepository
-)
+
 
 from app.identity.schemas.user_create import UserCreate
 from app.identity.schemas.user_response import UserResponse
 from app.identity.schemas.token_response import TokenResponse
 
-from app.core.security import (
-    hash_password,
-    verify_password,
-    create_access_token
+from app.identity.services.auth_service import (
+    AuthService
 )
 
 from app.core.dependencies import (
@@ -34,6 +30,7 @@ router = APIRouter(
 )
 
 
+
 @router.post(
     "/register",
     response_model=UserResponse
@@ -43,41 +40,10 @@ def register_user(
     db: Session = Depends(get_db)
 ):
 
-    existing_user = UserRepository.get_by_email(
-        db,
-        user.email
+    return AuthService.register_user(
+        db=db,
+        user_data=user
     )
-
-    if existing_user:
-        raise HTTPException(
-            status_code=400,
-            detail="Email ya registrado"
-        )
-
-    # =====================================
-    # SEGURIDAD:
-    # No permitir registro público ADMIN
-    # =====================================
-
-    if user.role == RoleEnum.ADMIN:
-        raise HTTPException(
-            status_code=403,
-            detail="No está permitido registrar administradores"
-        )
-
-    new_user = User(
-        email=user.email,
-        password_hash=hash_password(user.password),
-        role=user.role,
-        is_active=True
-    )
-
-    new_user = UserRepository.create(
-        db,
-        new_user
-    )
-
-    return new_user
 
 
 @router.post(
@@ -89,38 +55,10 @@ def login(
     db: Session = Depends(get_db)
 ):
 
-    user = UserRepository.get_by_email(
-        db,
-        form_data.username
-    )
-
-    if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="Credenciales inválidas"
-        )
-
-    if not user.is_active:
-        raise HTTPException(
-            status_code=403,
-            detail="Usuario desactivado"
-        )
-
-    if not verify_password(
-        form_data.password,
-        user.password_hash
-    ):
-        raise HTTPException(
-            status_code=401,
-            detail="Credenciales inválidas"
-        )
-
-    token = create_access_token(
-        {
-            "sub": str(user.id),
-            "email": user.email,
-            "role": user.role
-        }
+    token = AuthService.authenticate(
+        db=db,
+        email=form_data.username,
+        password=form_data.password
     )
 
     return TokenResponse(

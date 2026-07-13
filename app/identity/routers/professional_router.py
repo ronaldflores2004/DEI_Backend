@@ -1,18 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from datetime import datetime
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 
 from app.identity.models.user import User
-from app.identity.models.professional_profile import (
-    ProfessionalProfile
-)
-
-from app.identity.repositories.professional_repository import (
-    ProfessionalRepository
-)
 
 from app.identity.schemas.professional_profile_create import (
     ProfessionalProfileCreate
@@ -22,7 +14,11 @@ from app.identity.schemas.professional_profile_response import (
     ProfessionalProfileResponse
 )
 
-from app.shared.enums.role_enum import RoleEnum
+from app.identity.services.professional_service import (
+    ProfessionalService
+)
+
+
 
 router = APIRouter(
     prefix="/professionals",
@@ -40,40 +36,11 @@ def create_professional_profile(
     current_user: User = Depends(get_current_user)
 ):
 
-    if current_user.role != RoleEnum.PROFESSIONAL:
-        raise HTTPException(
-            status_code=403,
-            detail="Solo profesionales pueden crear este perfil"
-        )
-
-    existing_profile = (
-        ProfessionalRepository.get_by_user_id(
-            db,
-            current_user.id
-        )
+    return ProfessionalService.create_profile(
+        db=db,
+        current_user=current_user,
+        profile=profile
     )
-
-    if existing_profile:
-        raise HTTPException(
-            status_code=400,
-            detail="Perfil ya existente"
-        )
-
-    professional = ProfessionalProfile(
-        user_id=current_user.id,
-        first_name=profile.first_name,
-        last_name=profile.last_name,
-        license_number=profile.license_number,
-        specialties=profile.specialties,
-        is_verified=False
-    )
-
-    professional = ProfessionalRepository.create(
-        db,
-        professional
-    )
-
-    return professional
 
 
 @router.get("/pending")
@@ -82,14 +49,9 @@ def get_pending_professionals(
     current_user: User = Depends(get_current_user)
 ):
 
-    if current_user.role != RoleEnum.ADMIN:
-        raise HTTPException(
-            status_code=403,
-            detail="Solo administradores"
-        )
-
-    return ProfessionalRepository.get_pending(
-        db
+    return ProfessionalService.get_pending(
+        db=db,
+        current_user=current_user
     )
 
 
@@ -100,34 +62,8 @@ def verify_professional(
     current_user: User = Depends(get_current_user)
 ):
 
-    if current_user.role != RoleEnum.ADMIN:
-        raise HTTPException(
-            status_code=403,
-            detail="Solo administradores"
-        )
-
-    professional = (
-        ProfessionalRepository.get_by_id(
-            db,
-            professional_id
-        )
+    return ProfessionalService.verify_professional(
+        professional_id=professional_id,
+        db=db,
+        current_user=current_user
     )
-
-    if not professional:
-        raise HTTPException(
-            status_code=404,
-            detail="Profesional no encontrado"
-        )
-
-    professional.is_verified = True
-    professional.verified_by_admin = current_user.id
-    professional.verified_at = datetime.utcnow()
-
-    ProfessionalRepository.update(
-        db,
-        professional
-    )
-
-    return {
-        "message": "Profesional verificado"
-    }

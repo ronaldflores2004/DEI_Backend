@@ -12,6 +12,8 @@ from app.identity.repositories.user_repository import (
     UserRepository,
 )
 
+from app.identity.schemas.user_create import UserCreate
+
 from app.shared.enums.role_enum import RoleEnum
 
 
@@ -24,7 +26,7 @@ class AuthService:
     @staticmethod
     def register_user(
         db: Session,
-        user_data,
+        user_data: UserCreate,
     ) -> User:
 
         if UserRepository.exists_email(

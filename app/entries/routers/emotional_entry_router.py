@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 from fastapi import Depends
-from fastapi import HTTPException
 from fastapi import UploadFile
 from fastapi import File
 
@@ -16,14 +15,6 @@ from app.identity.models.patient_profile import (
     PatientProfile
 )
 
-from app.entries.models.emotional_entry import (
-    EmotionalEntry
-)
-
-from app.entries.repositories.emotional_entry_repository import (
-    EmotionalEntryRepository
-)
-
 from app.entries.schemas.emotional_entry_create import (
     EmotionalEntryCreate
 )
@@ -32,9 +23,11 @@ from app.entries.schemas.emotional_entry_response import (
     EmotionalEntryResponse
 )
 
-import os
-import uuid
-import shutil
+from app.entries.services.emotional_entry_service import (
+    EmotionalEntryService
+)
+
+
 
 router = APIRouter(
     prefix="/entries",
@@ -58,21 +51,11 @@ def create_entry(
     )
 ):
 
-    emotional_entry = EmotionalEntry(
-        patient_id=patient.id,
-        entry_type=entry.entry_type,
-        text_content=entry.text_content
+    return EmotionalEntryService.create_entry(
+        data=entry,
+        patient=patient,
+        db=db
     )
-
-    emotional_entry = (
-        EmotionalEntryRepository.create(
-            db,
-            emotional_entry
-        )
-    )
-
-    return emotional_entry
-
 
 # =====================================
 # Crear entrada de audio
@@ -87,42 +70,11 @@ async def create_audio_entry(
     )
 ):
 
-    extension = os.path.splitext(
-        file.filename
-    )[1]
-
-    unique_filename = (
-        str(uuid.uuid4())
-        + extension
+    return await EmotionalEntryService.create_audio_entry(
+        file=file,
+        patient=patient,
+        db=db
     )
-
-    file_path = os.path.join(
-        "uploads",
-        "audio",
-        unique_filename
-    )
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(
-            file.file,
-            buffer
-        )
-
-    emotional_entry = EmotionalEntry(
-        patient_id=patient.id,
-        entry_type="AUDIO",
-        audio_path=file_path
-    )
-
-    emotional_entry = (
-        EmotionalEntryRepository.create(
-            db,
-            emotional_entry
-        )
-    )
-
-    return emotional_entry
-
 
 # =====================================
 # Listar entradas
@@ -139,11 +91,9 @@ def get_entries(
     )
 ):
 
-    return (
-        EmotionalEntryRepository.get_by_patient(
-            db,
-            patient.id
-        )
+        return EmotionalEntryService.get_entries(
+        patient=patient,
+        db=db
     )
 
 
@@ -163,21 +113,11 @@ def get_entry(
     )
 ):
 
-    entry = EmotionalEntryRepository.get_by_id(
-        db,
-        entry_id
+        return EmotionalEntryService.get_entry(
+        entry_id=entry_id,
+        patient=patient,
+        db=db
     )
-
-    if (
-        not entry
-        or entry.patient_id != patient.id
-    ):
-        raise HTTPException(
-            status_code=404,
-            detail="Entrada no encontrada"
-        )
-
-    return entry
 
 
 # =====================================
@@ -193,25 +133,8 @@ def archive_entry(
     )
 ):
 
-    entry = EmotionalEntryRepository.get_by_id(
-        db,
-        entry_id
+    return EmotionalEntryService.archive_entry(
+        entry_id=entry_id,
+        patient=patient,
+        db=db
     )
-
-    if (
-        not entry
-        or entry.patient_id != patient.id
-    ):
-        raise HTTPException(
-            status_code=404,
-            detail="Entrada no encontrada"
-        )
-
-    EmotionalEntryRepository.archive(
-        db,
-        entry
-    )
-
-    return {
-        "message": "Entrada archivada"
-    }

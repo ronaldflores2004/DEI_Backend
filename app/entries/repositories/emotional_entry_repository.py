@@ -2,6 +2,8 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
+from app.shared.enums.entry_type_enum import EntryTypeEnum
+
 from app.entries.models.emotional_entry import (
     EmotionalEntry,
 )
@@ -72,7 +74,8 @@ class EmotionalEntryRepository:
         return (
             db.query(EmotionalEntry)
             .filter(
-                EmotionalEntry.patient_id == patient_id
+                EmotionalEntry.patient_id == patient_id,
+                EmotionalEntry.is_archived.is_(False)
             )
             .order_by(
                 EmotionalEntry.created_at.desc()
@@ -89,7 +92,8 @@ class EmotionalEntryRepository:
         return (
             db.query(EmotionalEntry)
             .filter(
-                EmotionalEntry.patient_id == patient_id
+                EmotionalEntry.patient_id == patient_id,
+                EmotionalEntry.is_archived.is_(False)
             )
             .order_by(
                 EmotionalEntry.created_at.desc()
@@ -121,7 +125,8 @@ class EmotionalEntryRepository:
             db.query(EmotionalEntry)
             .filter(
                 EmotionalEntry.patient_id == patient_id,
-                EmotionalEntry.entry_type == "TEXT"
+                EmotionalEntry.is_archived.is_(False),
+                EmotionalEntry.entry_type == EntryTypeEnum.TEXT
             )
             .order_by(
                 EmotionalEntry.created_at.desc()
@@ -139,7 +144,8 @@ class EmotionalEntryRepository:
             db.query(EmotionalEntry)
             .filter(
                 EmotionalEntry.patient_id == patient_id,
-                EmotionalEntry.entry_type == "AUDIO"
+                EmotionalEntry.is_archived.is_(False),
+                EmotionalEntry.entry_type == EntryTypeEnum.AUDIO
             )
             .order_by(
                 EmotionalEntry.created_at.desc()
@@ -158,6 +164,7 @@ class EmotionalEntryRepository:
             db.query(EmotionalEntry)
             .filter(
                 EmotionalEntry.patient_id == patient_id,
+                EmotionalEntry.is_archived.is_(False),
                 EmotionalEntry.created_at >= since
             )
             .order_by(
@@ -176,14 +183,14 @@ class EmotionalEntryRepository:
             db.query(EmotionalEntry)
             .filter(
                 EmotionalEntry.patient_id == patient_id,
-                EmotionalEntry.is_archived == True
+                EmotionalEntry.is_archived.is_(True)
             )
             .order_by(
                 EmotionalEntry.created_at.desc()
             )
             .all()
         )
-        
+
     @staticmethod
     def count_all(
         db: Session,
@@ -202,7 +209,7 @@ class EmotionalEntryRepository:
         return (
             db.query(EmotionalEntry)
             .filter(
-                EmotionalEntry.is_archived == True
+                EmotionalEntry.is_archived.is_(True)
             )
             .count()
         )

@@ -47,7 +47,7 @@ class ProfessionalRepository:
         return (
             db.query(ProfessionalProfile)
             .filter(
-                ProfessionalProfile.is_verified == False
+                ProfessionalProfile.is_verified.is_(False)
             )
             .all()
         )
@@ -84,7 +84,7 @@ class ProfessionalRepository:
         return (
             db.query(ProfessionalProfile)
             .filter(
-                ProfessionalProfile.is_verified == True
+                ProfessionalProfile.is_verified.is_(True)
             )
             .count()
         )
@@ -97,7 +97,7 @@ class ProfessionalRepository:
         return (
             db.query(ProfessionalProfile)
             .filter(
-                ProfessionalProfile.is_verified == False
+                ProfessionalProfile.is_verified.is_(False)
             )
             .count()
         )

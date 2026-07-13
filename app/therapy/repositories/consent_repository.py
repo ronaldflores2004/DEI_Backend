@@ -37,7 +37,7 @@ class ConsentRepository:
             .filter(
                 Consent.patient_id == patient_id,
                 Consent.professional_id == professional_id,
-                Consent.granted == True,
+                Consent.granted.is_(True),
             )
             .first()
         )

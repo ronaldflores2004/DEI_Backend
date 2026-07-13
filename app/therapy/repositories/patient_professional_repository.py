@@ -37,7 +37,7 @@ class PatientProfessionalRepository:
             .filter(
                 PatientProfessional.patient_id == patient_id,
                 PatientProfessional.professional_id == professional_id,
-                PatientProfessional.active == True,
+                PatientProfessional.active.is_(True),
             )
             .first()
         )
@@ -66,7 +66,21 @@ class PatientProfessionalRepository:
             db.query(PatientProfessional)
             .filter(
                 PatientProfessional.professional_id == professional_id,
-                PatientProfessional.active == True,
+                PatientProfessional.active.is_(True),
+            )
+            .all()
+        )
+        
+    @staticmethod
+    def get_by_patient(
+        db: Session,
+        patient_id: int,
+    ) -> list[PatientProfessional]:
+
+        return (
+            db.query(PatientProfessional)
+            .filter(
+                PatientProfessional.patient_id == patient_id
             )
             .all()
         )

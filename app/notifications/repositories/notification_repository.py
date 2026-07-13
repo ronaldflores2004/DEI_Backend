@@ -66,7 +66,7 @@ class NotificationRepository:
             db.query(Notification)
             .filter(
                 Notification.user_id == user_id,
-                Notification.is_read == False,
+                Notification.is_read.is_(False),
             )
             .count()
         )

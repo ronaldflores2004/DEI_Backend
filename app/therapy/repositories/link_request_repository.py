@@ -4,6 +4,9 @@ from app.therapy.models.link_request import (
     LinkRequest,
 )
 
+from app.shared.enums.link_request_status_enum import (
+    LinkRequestStatusEnum
+)
 
 class LinkRequestRepository:
     """
@@ -37,7 +40,7 @@ class LinkRequestRepository:
             .filter(
                 LinkRequest.patient_id == patient_id,
                 LinkRequest.professional_id == professional_id,
-                LinkRequest.status == "PENDING",
+                LinkRequest.status == LinkRequestStatusEnum.PENDING,
             )
             .first()
         )
@@ -66,7 +69,7 @@ class LinkRequestRepository:
             db.query(LinkRequest)
             .filter(
                 LinkRequest.professional_id == professional_id,
-                LinkRequest.status == "PENDING",
+                LinkRequest.status == LinkRequestStatusEnum.PENDING,
             )
             .all()
         )

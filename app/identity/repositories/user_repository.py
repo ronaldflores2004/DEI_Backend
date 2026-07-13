@@ -89,7 +89,7 @@ class UserRepository:
         return (
             db.query(User)
             .filter(
-                User.is_active == True
+                User.is_active.is_(True)
             )
             .count()
         )
@@ -102,7 +102,7 @@ class UserRepository:
         return (
             db.query(User)
             .filter(
-                User.is_active == False
+                User.is_active.is_(False)
             )
             .count()
         )
@@ -116,7 +116,7 @@ class UserRepository:
             db.query(User)
             .filter(
                 User.role == "ADMIN",
-                User.is_active == True
+                User.is_active.is_(True)
             )
             .count()
         )

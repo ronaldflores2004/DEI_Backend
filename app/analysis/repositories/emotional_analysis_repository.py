@@ -62,11 +62,7 @@ class EmotionalAnalysisRepository:
         db.refresh(analysis)
 
         return analysis
-    
-    # =====================================
-    # ACTUALIZAR ANÁLISIS
-    # =====================================
-    
+
     @staticmethod
     def update(
         db: Session,
@@ -97,8 +93,11 @@ class EmotionalAnalysisRepository:
                 == EmotionalEntry.id
             )
             .filter(
-                EmotionalEntry.patient_id
-                == patient_id
+                EmotionalEntry.patient_id == patient_id,
+                EmotionalEntry.is_archived.is_(False)
+            )
+            .order_by(
+                EmotionalAnalysis.analyzed_at.desc()
             )
             .all()
         )
@@ -118,10 +117,12 @@ class EmotionalAnalysisRepository:
                 == EmotionalEntry.id
             )
             .filter(
-                EmotionalEntry.patient_id
-                == patient_id,
-                EmotionalAnalysis.analyzed_at
-                >= since
+                EmotionalEntry.patient_id == patient_id,
+                EmotionalEntry.is_archived.is_(False),
+                EmotionalAnalysis.analyzed_at >= since
+            )
+            .order_by(
+                EmotionalAnalysis.analyzed_at.desc()
             )
             .all()
         )
@@ -140,8 +141,8 @@ class EmotionalAnalysisRepository:
                 == EmotionalEntry.id
             )
             .filter(
-                EmotionalEntry.patient_id
-                == patient_id
+                EmotionalEntry.patient_id == patient_id,
+                EmotionalEntry.is_archived.is_(False)
             )
             .order_by(
                 EmotionalAnalysis.analyzed_at.desc()
@@ -163,8 +164,8 @@ class EmotionalAnalysisRepository:
                 == EmotionalEntry.id
             )
             .filter(
-                EmotionalEntry.patient_id
-                == patient_id
+                EmotionalEntry.patient_id == patient_id,
+                EmotionalEntry.is_archived.is_(False)
             )
             .count()
         )
@@ -183,8 +184,8 @@ class EmotionalAnalysisRepository:
                 == EmotionalEntry.id
             )
             .filter(
-                EmotionalEntry.patient_id
-                == patient_id,
+                EmotionalEntry.patient_id == patient_id,
+                EmotionalEntry.is_archived.is_(False),
                 EmotionalAnalysis.risk_level.in_(
                     [
                         "Medio",
@@ -193,9 +194,12 @@ class EmotionalAnalysisRepository:
                     ]
                 )
             )
+            .order_by(
+                EmotionalAnalysis.analyzed_at.desc()
+            )
             .all()
         )
-    
+
     @staticmethod
     def count_all(
         db: Session,
@@ -205,6 +209,7 @@ class EmotionalAnalysisRepository:
             db.query(EmotionalAnalysis)
             .count()
         )
+
     # =====================================
     # OBTENER ANÁLISIS CON ENTRADAS
     # =====================================
@@ -213,10 +218,6 @@ class EmotionalAnalysisRepository:
     def get_with_entries(
         db: Session,
     ) -> list[tuple]:
-
-        from app.entries.models.emotional_entry import (
-            EmotionalEntry
-        )
 
         return (
             db.query(
@@ -230,4 +231,3 @@ class EmotionalAnalysisRepository:
             )
             .all()
         )
-        

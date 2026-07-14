@@ -37,13 +37,17 @@ def create_access_token(data: dict) -> str:
     Genera un JWT de acceso.
     """
 
+    now = datetime.utcnow()
+
     payload = data.copy()
 
-    expire = datetime.utcnow() + timedelta(
-        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-    )
-
-    payload.update({"exp": expire})
+    payload.update({
+        "iat": now,
+        "nbf": now,
+        "exp": now + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+    })
 
     return jwt.encode(
         payload,
@@ -51,12 +55,3 @@ def create_access_token(data: dict) -> str:
         algorithm=settings.ALGORITHM,
     )
 
-
-# =====================================================
-# Compatibilidad temporal
-# Se eliminará al finalizar la migración.
-# =====================================================
-
-SECRET_KEY = settings.SECRET_KEY
-ALGORITHM = settings.ALGORITHM
-ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES

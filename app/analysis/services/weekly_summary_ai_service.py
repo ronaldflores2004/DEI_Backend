@@ -8,54 +8,57 @@ client = genai.Client(
     api_key=GEMINI_API_KEY
 )
 
+class WeeklySummaryAIService:
+    """Servicio para generar resúmenes semanales usando Gemini."""
 
-def generate_ai_summary(
-    dominant_emotion: str,
-    latest_emotion: str,
-    risk_level: str,
-    topics: list,
-    triggers: list
-):
+    @staticmethod
+    def generate_ai_summary(
+        dominant_emotion: str,
+        latest_emotion: str,
+        risk_level: str,
+        topics: list,
+        triggers: list
+    ):
 
-    prompt = f"""
-Genera un resumen breve para un paciente.
+        prompt = f"""
+    Genera un resumen breve para un paciente.
 
-Emoción predominante:
-{dominant_emotion}
+    Emoción predominante:
+    {dominant_emotion}
 
-Última emoción:
-{latest_emotion}
+    Última emoción:
+    {latest_emotion}
 
-Nivel de riesgo:
-{risk_level}
+    Nivel de riesgo:
+    {risk_level}
 
-Temas identificados:
-{topics}
+    Temas identificados:
+    {topics}
 
-Desencadenantes identificados:
-{triggers}
+    Desencadenantes identificados:
+    {triggers}
 
-Reglas:
-- Lenguaje sencillo.
-- Español.
-- Máximo 2 oraciones.
-- No hagas diagnósticos.
-"""
+    Reglas:
+    - Lenguaje sencillo.
+    - Español.
+    - Máximo 2 oraciones.
+    - No hagas diagnósticos.
+    """
 
-    try:
+        try:
 
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
-        )
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt
+            )
 
-        return response.text.strip()
+            return response.text.strip()
 
-    except Exception:
+        except Exception:
 
-        response = client.models.generate_content(
-            model="gemini-2.5-flash-lite",
-            contents=prompt
-        )
+            response = client.models.generate_content(
+                model="gemini-2.5-flash-lite",
+                contents=prompt
+            )
 
-        return response.text.strip()
+            return response.text.strip()

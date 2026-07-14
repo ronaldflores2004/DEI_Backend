@@ -60,6 +60,18 @@ class EmotionalEntryService:
         patient: PatientProfile,
         db: Session,
     ) -> EmotionalEntry:
+        
+        if data.entry_type != EntryTypeEnum.TEXT:
+            raise HTTPException(
+                status_code=400,
+                detail="Este endpoint solo permite entradas de texto."
+            )
+
+        if not data.text_content.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="El contenido no puede estar vacío."
+            )
 
         entry = EmotionalEntry(
             patient_id=patient.id,

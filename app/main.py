@@ -34,9 +34,6 @@ from app.therapy.routers.consent_router import (
 from app.entries.routers.emotional_entry_router import (
     router as emotional_entry_router,
 )
-from app.entries.routers.audio_router import (
-    router as audio_router,
-)
 
 # =====================================================
 # Analysis
@@ -135,7 +132,6 @@ app.include_router(link_request_router)
 app.include_router(consent_router)
 
 app.include_router(emotional_entry_router)
-app.include_router(audio_router)
 
 app.include_router(transcription_router)
 app.include_router(emotional_analysis_router)

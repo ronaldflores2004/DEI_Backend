@@ -23,8 +23,7 @@ from app.analysis.schemas.transcription_response import (
 )
 
 from app.analysis.services.transcription_service import (
-    create_transcription,
-    update_transcription
+    TranscriptionService
 )
 
 router = APIRouter(
@@ -48,7 +47,7 @@ def create(
     current_user: User = Depends(get_current_user)
 ):
 
-    return create_transcription(
+    return TranscriptionService.create_transcription(
         entry_id=entry_id,
         data=data,
         db=db,
@@ -71,7 +70,7 @@ def update(
     current_user: User = Depends(get_current_user)
 ):
 
-    return update_transcription(
+    return TranscriptionService.update_transcription(
         transcription_id=transcription_id,
         data=data,
         db=db,

@@ -29,241 +29,254 @@ from app.analysis.repositories.transcription_repository import (
 )
 
 from app.analysis.services.fake_analysis_service import (
-    analyze_text
+    analyze_text_with_fake
 )
 
 from app.analysis.services.gemini_analysis_service import (
-    analyze_text_with_gemini
+    GeminiAnalysisService,
 )
 
 from app.shared.enums.entry_type_enum import (
     EntryTypeEnum
 )
 
+from app.analysis.schemas.emotional_analysis_create import (
+    EmotionalAnalysisCreate
+)
 
-def validate_entry_owner(
-    entry: EmotionalEntry,
-    patient: PatientProfile
-):
+class EmotionalAnalysisService:
+    """
+    Servicio encargado de la gestión de
+    análisis emocionales.
+    """
+    
+    @staticmethod
+    def _validate_entry_owner(
+        entry: EmotionalEntry,
+        patient: PatientProfile
+    ) -> None:
 
-    if entry.patient_id != patient.id:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes permiso para acceder a esta entrada"
-        )
+        if entry.patient_id != patient.id:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes permiso para acceder a esta entrada"
+            )
 
 
-def create_analysis(
-    entry_id: int,
-    patient: PatientProfile,
-    data,
-    db: Session
-):
+    @staticmethod
+    def create_analysis(
+        entry_id: int,
+        patient: PatientProfile,
+        data: EmotionalAnalysisCreate,
+        db: Session
+    ) -> EmotionalAnalysis:
 
-    entry = EmotionalEntryRepository.get_by_id(
-        db,
-        entry_id
-    )
-
-    if not entry:
-        raise HTTPException(
-            status_code=404,
-            detail="Entrada no encontrada"
-        )
-
-    validate_entry_owner(
-        entry,
-        patient
-    )
-
-    existing = (
-        EmotionalAnalysisRepository.get_by_entry(
+        entry = EmotionalEntryRepository.get_by_id(
             db,
             entry_id
         )
-    )
 
-    if existing:
-        raise HTTPException(
-            status_code=400,
-            detail="La entrada ya tiene análisis"
+        if not entry:
+            raise HTTPException(
+                status_code=404,
+                detail="Entrada no encontrada"
+            )
+
+        EmotionalAnalysisService._validate_entry_owner(
+            entry,
+            patient
         )
 
-    analysis = EmotionalAnalysis(
-        entry_id=entry.id,
-        primary_emotion=data.primary_emotion,
-        emotion_intensity=data.emotion_intensity,
-        risk_level=data.risk_level,
-        analysis_json=data.analysis_json
-    )
-
-    return EmotionalAnalysisRepository.create(
-        db,
-        analysis
-    )
-
-
-def get_analysis(
-    entry_id: int,
-    patient: PatientProfile,
-    db: Session
-):
-
-    analysis = (
-        EmotionalAnalysisRepository.get_by_entry(
-            db,
-            entry_id
-        )
-    )
-
-    if not analysis:
-        raise HTTPException(
-            status_code=404,
-            detail="Análisis no encontrado"
-        )
-
-    entry = EmotionalEntryRepository.get_by_id(
-        db,
-        entry_id
-    )
-
-    if not entry:
-        raise HTTPException(
-            status_code=404,
-            detail="Entrada no encontrada"
-        )
-
-    validate_entry_owner(
-        entry,
-        patient
-    )
-
-    return analysis
-
-
-def create_analysis_from_entry(
-    entry_id: int,
-    patient: PatientProfile,
-    db: Session
-):
-
-    entry = EmotionalEntryRepository.get_by_id(
-        db,
-        entry_id
-    )
-
-    if not entry:
-        raise HTTPException(
-            status_code=404,
-            detail="Entrada no encontrada"
-        )
-
-    text_to_analyze = None
-
-    if entry.entry_type == EntryTypeEnum.TEXT:
-
-        text_to_analyze = entry.text_content
-
-    elif entry.entry_type == EntryTypeEnum.AUDIO:
-
-        transcription = (
-            TranscriptionRepository.get_by_entry(
+        existing = (
+            EmotionalAnalysisRepository.get_by_entry(
                 db,
-                entry.id
+                entry_id
             )
         )
 
-        if not transcription:
+        if existing:
             raise HTTPException(
                 status_code=400,
-                detail="El audio aún no tiene transcripción"
+                detail="La entrada ya tiene análisis"
             )
 
-        text_to_analyze = (
-            transcription.transcription_text
+        analysis = EmotionalAnalysis(
+            entry_id=entry.id,
+            primary_emotion=data.primary_emotion,
+            emotion_intensity=data.emotion_intensity,
+            risk_level=data.risk_level,
+            analysis_json=data.analysis_json
         )
 
-    else:
-        raise HTTPException(
-            status_code=400,
-            detail="Tipo de entrada no soportado"
+        return EmotionalAnalysisRepository.create(
+            db,
+            analysis
         )
 
-    if not text_to_analyze:
-        raise HTTPException(
-            status_code=400,
-            detail="No existe texto para analizar"
+    
+    @staticmethod
+    def get_analysis(
+        entry_id: int,
+        patient: PatientProfile,
+        db: Session
+    ) -> EmotionalAnalysis:
+
+        analysis = (
+            EmotionalAnalysisRepository.get_by_entry(
+                db,
+                entry_id
+            )
         )
 
-    validate_entry_owner(
-        entry,
-        patient
-    )
+        if not analysis:
+            raise HTTPException(
+                status_code=404,
+                detail="Análisis no encontrado"
+            )
 
-    existing = (
-        EmotionalAnalysisRepository.get_by_entry(
-            db=db,
-            entry_id=entry_id
+        entry = EmotionalEntryRepository.get_by_id(
+            db,
+            entry_id
         )
-    )
 
-    try:
+        if not entry:
+            raise HTTPException(
+                status_code=404,
+                detail="Entrada no encontrada"
+            )
 
-        result = (
-            analyze_text_with_gemini(
+        EmotionalAnalysisService._validate_entry_owner(
+            entry,
+            patient
+        )
+
+        return analysis
+
+
+    @staticmethod
+    def create_analysis_from_entry(
+        entry_id: int,
+        patient: PatientProfile,
+        db: Session
+    ) -> EmotionalAnalysis:
+
+        entry = EmotionalEntryRepository.get_by_id(
+            db,
+            entry_id
+        )
+
+        if not entry:
+            raise HTTPException(
+                status_code=404,
+                detail="Entrada no encontrada"
+            )
+
+        EmotionalAnalysisService._validate_entry_owner(
+            entry,
+            patient
+        )
+
+        text_to_analyze = None
+
+        if entry.entry_type == EntryTypeEnum.TEXT:
+
+            text_to_analyze = entry.text_content
+
+        elif entry.entry_type == EntryTypeEnum.AUDIO:
+
+            transcription = (
+                TranscriptionRepository.get_by_entry(
+                    db,
+                    entry.id
+                )
+            )
+
+            if not transcription:
+                raise HTTPException(
+                    status_code=400,
+                    detail="El audio aún no tiene transcripción"
+                )
+
+            text_to_analyze = (
+                transcription.transcription_text
+            )
+
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Tipo de entrada no soportado"
+            )
+
+        if not text_to_analyze:
+            raise HTTPException(
+                status_code=400,
+                detail="No existe texto para analizar"
+            )
+
+        existing = (
+            EmotionalAnalysisRepository.get_by_entry(
+                db=db,
+                entry_id=entry_id
+            )
+        )
+
+        try:
+
+            result = (
+                GeminiAnalysisService.analyze_text_with_gemini(
+                    text_to_analyze
+                )
+            )
+
+        except Exception as e:
+
+            print("ERROR GEMINI:")
+            print(e)
+
+            result = analyze_text_with_fake(
                 text_to_analyze
             )
-        )
 
-    except Exception as e:
+        if existing:
+            
+            existing.entry_id = entry.id
 
-        print("ERROR GEMINI:")
-        print(e)
-
-        result = analyze_text(
-            text_to_analyze
-        )
-
-    if existing:
-        
-        existing.entry_id = entry.id
-
-        existing.primary_emotion = (
-            result["primary_emotion"]
-        )
-
-        existing.emotion_intensity = (
-            result["emotion_intensity"]
-        )
-
-        existing.risk_level = (
-            result["risk_level"]
-        )
-
-        existing.analysis_json = (
-            result["analysis_json"]
-        )
-
-        existing.analyzed_at = (
-            datetime.utcnow()
-        )
-
-        return (
-            EmotionalAnalysisRepository.update(
-                db=db,
-                analysis=existing
+            existing.primary_emotion = (
+                result["primary_emotion"]
             )
+
+            existing.emotion_intensity = (
+                result["emotion_intensity"]
+            )
+
+            existing.risk_level = (
+                result["risk_level"]
+            )
+
+            existing.analysis_json = (
+                result["analysis_json"]
+            )
+
+            existing.analyzed_at = (
+                datetime.utcnow()
+            )
+
+            return (
+                EmotionalAnalysisRepository.update(
+                    db=db,
+                    analysis=existing
+                )
+            )
+
+        analysis = EmotionalAnalysis(
+            entry_id=entry.id,
+            primary_emotion=result["primary_emotion"],
+            emotion_intensity=result["emotion_intensity"],
+            risk_level=result["risk_level"],
+            analysis_json=result["analysis_json"]
         )
 
-    analysis = EmotionalAnalysis(
-        entry_id=entry.id,
-        primary_emotion=result["primary_emotion"],
-        emotion_intensity=result["emotion_intensity"],
-        risk_level=result["risk_level"],
-        analysis_json=result["analysis_json"]
-    )
-
-    return EmotionalAnalysisRepository.create(
-        db,
-        analysis
-    )
+        return EmotionalAnalysisRepository.create(
+            db,
+            analysis
+        )

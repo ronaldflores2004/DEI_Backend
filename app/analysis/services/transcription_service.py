@@ -28,142 +28,170 @@ from app.analysis.schemas.transcription_update import (
     TranscriptionUpdate
 )
 
+from app.identity.models.patient_profile import (
+    PatientProfile
+)
 
+from app.entries.models.emotional_entry import (
+    EmotionalEntry
+)
+
+
+class TranscriptionService:
+    """
+    Servicio encargado de la gestión de
+    transcripciones.
+    """
+    
+    @staticmethod
+    def _get_patient(
+        db: Session,
+        current_user: User,
+    ) -> PatientProfile:
+
+        patient = PatientRepository.get_by_user_id(
+            db=db,
+            user_id=current_user.id,
+        )
+
+        if not patient:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes perfil de paciente",
+            )
+
+        return patient
+    
+    @staticmethod
+    def _validate_entry_owner(
+        entry: EmotionalEntry,
+        patient: PatientProfile,
+    ) -> None:
+
+        if entry.patient_id != patient.id:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes permiso para acceder a esta entrada"
+            )
 # =====================================
 # Crear transcripción
 # =====================================
 
-def create_transcription(
-    entry_id: int,
-    data: TranscriptionCreate,
-    db: Session,
-    current_user: User
-):
+    @staticmethod
+    def create_transcription(
+        entry_id: int,
+        data: TranscriptionCreate,
+        db: Session,
+        current_user: User
+    ) -> AudioTranscription:
 
-    patient = (
-        PatientRepository.get_by_user_id(
-            db=db,
-            user_id=current_user.id
-        )
-    )
-
-    if not patient:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes perfil de paciente"
+        patient = TranscriptionService._get_patient(
+            db,
+            current_user
         )
 
-    entry = (
-        EmotionalEntryRepository.get_by_id(
-            db=db,
-            entry_id=entry_id
-        )
-    )
-
-    if not entry:
-        raise HTTPException(
-            status_code=404,
-            detail="Entrada no encontrada"
+        entry = (
+            EmotionalEntryRepository.get_by_id(
+                db=db,
+                entry_id=entry_id
+            )
         )
 
-    if entry.patient_id != patient.id:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes permiso para transcribir esta entrada"
+        if not entry:
+            raise HTTPException(
+                status_code=404,
+                detail="Entrada no encontrada"
+            )
+
+        TranscriptionService._validate_entry_owner(
+            entry,
+            patient
+        )
+        
+        existing = (
+            TranscriptionRepository.get_by_entry(
+                db=db,
+                entry_id=entry.id
+            )
         )
 
-    existing = (
-        TranscriptionRepository.get_by_entry(
-            db=db,
-            entry_id=entry.id
-        )
-    )
+        if existing:
+            raise HTTPException(
+                status_code=400,
+                detail="La entrada ya tiene una transcripción"
+            )
 
-    if existing:
-        raise HTTPException(
-            status_code=400,
-            detail="La entrada ya tiene una transcripción"
-        )
-
-    transcription = AudioTranscription(
-        entry_id=entry.id,
-        transcription_text=data.transcription_text,
-        provider="MANUAL"
-    )
-
-    return (
-        TranscriptionRepository.create(
-            db=db,
-            transcription=transcription
-        )
-    )
-
-
-# =====================================
-# Actualizar transcripción
-# =====================================
-
-def update_transcription(
-    transcription_id: int,
-    data: TranscriptionUpdate,
-    db: Session,
-    current_user: User
-):
-
-    patient = (
-        PatientRepository.get_by_user_id(
-            db=db,
-            user_id=current_user.id
-        )
-    )
-
-    if not patient:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes perfil de paciente"
+        transcription = AudioTranscription(
+            entry_id=entry.id,
+            transcription_text=data.transcription_text,
+            provider="MANUAL"
         )
 
-    transcription = (
-        TranscriptionRepository.get_by_id(
-            db=db,
-            transcription_id=transcription_id
-        )
-    )
-
-    if not transcription:
-        raise HTTPException(
-            status_code=404,
-            detail="Transcripción no encontrada"
+        return (
+            TranscriptionRepository.create(
+                db=db,
+                transcription=transcription
+            )
         )
 
-    entry = (
-        EmotionalEntryRepository.get_by_id(
-            db=db,
-            entry_id=transcription.entry_id
+
+    # =====================================
+    # Actualizar transcripción
+    # =====================================
+    
+    @staticmethod
+    def update_transcription(
+        transcription_id: int,
+        data: TranscriptionUpdate,
+        db: Session,
+        current_user: User
+    ) -> AudioTranscription:
+
+        patient = TranscriptionService._get_patient(
+            db,
+            current_user
         )
-    )
 
-    if not entry:
-        raise HTTPException(
-            status_code=404,
-            detail="Entrada no encontrada"
+        transcription = (
+            TranscriptionRepository.get_by_id(
+                db=db,
+                transcription_id=transcription_id
+            )
         )
 
-    if entry.patient_id != patient.id:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes permiso para modificar esta transcripción"
+        if not transcription:
+            raise HTTPException(
+                status_code=404,
+                detail="Transcripción no encontrada"
+            )
+
+        entry = (
+            EmotionalEntryRepository.get_by_id(
+                db=db,
+                entry_id=transcription.entry_id
+            )
         )
 
-    transcription.transcription_text = (
-        data.transcription_text
-    )
+        if not entry:
+            raise HTTPException(
+                status_code=404,
+                detail="Entrada no encontrada"
+            )
 
-    transcription.provider = "MANUAL"
-
-    return (
-        TranscriptionRepository.update(
-            db=db,
-            transcription=transcription
+        TranscriptionService._validate_entry_owner(
+            entry,
+            patient
         )
-    )
+
+        transcription.transcription_text = (
+            data.transcription_text
+        )
+
+        transcription.provider = "MANUAL"
+
+        return (
+            TranscriptionRepository.update(
+                db=db,
+                transcription=transcription
+            )
+        )

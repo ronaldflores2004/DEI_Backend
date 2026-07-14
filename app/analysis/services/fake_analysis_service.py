@@ -1,4 +1,4 @@
-def analyze_text(text: str):
+def analyze_text_with_fake(text: str):
 
     text_lower = text.lower()
 

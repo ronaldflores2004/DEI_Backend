@@ -26,13 +26,11 @@ from app.analysis.schemas.weekly_summary_response import (
 )
 
 from app.analysis.services.emotional_analysis_service import (
-    create_analysis as create_analysis_service,
-    get_analysis as get_analysis_service,
-    create_analysis_from_entry
+    EmotionalAnalysisService
 )
 
 from app.analysis.services.weekly_summary_service import (
-    get_weekly_summary
+    WeeklySummaryService,
 )
 
 router = APIRouter(
@@ -58,7 +56,7 @@ def create_analysis(
     )
 ):
 
-    return create_analysis_service(
+    return EmotionalAnalysisService.create_analysis(
         entry_id=entry_id,
         patient=patient,
         data=data,
@@ -82,7 +80,7 @@ def get_analysis(
     )
 ):
 
-    return get_analysis_service(
+    return EmotionalAnalysisService.get_analysis(
         entry_id=entry_id,
         patient=patient,
         db=db
@@ -105,7 +103,7 @@ def auto_analyze(
     )
 ):
 
-    return create_analysis_from_entry(
+    return EmotionalAnalysisService.create_analysis_from_entry(
         entry_id=entry_id,
         patient=patient,
         db=db
@@ -127,7 +125,7 @@ def reanalyze(
     )
 ):
 
-    return create_analysis_from_entry(
+    return EmotionalAnalysisService.create_analysis_from_entry(
         entry_id=entry_id,
         patient=patient,
         db=db
@@ -148,7 +146,7 @@ def weekly_summary(
     )
 ):
 
-    return get_weekly_summary(
-        patient,
-        db
+    return WeeklySummaryService.get_weekly_summary(
+        patient=patient,
+        db=db
     )

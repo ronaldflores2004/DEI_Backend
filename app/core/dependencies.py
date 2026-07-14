@@ -6,10 +6,8 @@ from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import (
-    SECRET_KEY,
-    ALGORITHM
-)
+
+from app.core.config import settings
 
 from app.identity.models.user import User
 
@@ -33,6 +31,10 @@ from app.identity.repositories.professional_repository import (
     ProfessionalRepository
 )
 
+from app.shared.enums.role_enum import (
+    RoleEnum
+)
+
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/auth/login"
 )
@@ -52,8 +54,8 @@ def get_current_user(
 
         payload = jwt.decode(
             token,
-            SECRET_KEY,
-            algorithms=[ALGORITHM]
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM]
         )
 
         user_id = payload.get("sub")
@@ -65,17 +67,12 @@ def get_current_user(
         raise credentials_exception
 
     user = UserRepository.get_by_id(
-        db,
-        int(user_id)
+        db=db,
+        user_id=int(user_id)
     )
 
     if user is None:
         raise credentials_exception
-
-    # =====================================
-    # SEGURIDAD
-    # Usuario desactivado no puede usar JWT
-    # =====================================
 
     if not user.is_active:
         raise HTTPException(
@@ -112,9 +109,15 @@ def get_current_patient_profile(
     db: Session = Depends(get_db)
 ):
 
+    if current_user.role != RoleEnum.PATIENT:
+        raise HTTPException(
+            status_code=403,
+            detail="Acceso permitido solo para pacientes"
+        )
+
     patient = PatientRepository.get_by_user_id(
-        db,
-        current_user.id
+        db=db,
+        user_id=current_user.id
     )
 
     if not patient:
@@ -133,9 +136,15 @@ def get_current_professional_profile(
     db: Session = Depends(get_db)
 ):
 
+    if current_user.role != RoleEnum.PROFESSIONAL:
+        raise HTTPException(
+            status_code=403,
+            detail="Acceso permitido solo para profesionales"
+        )
+
     professional = ProfessionalRepository.get_by_user_id(
-        db,
-        current_user.id
+        db=db,
+        user_id=current_user.id
     )
 
     if not professional:

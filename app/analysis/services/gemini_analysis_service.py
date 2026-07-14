@@ -11,93 +11,96 @@ client = genai.Client(
     api_key=GEMINI_API_KEY
 )
 
+class GeminiAnalysisService:
+    """Servicio para análisis emocional usando Gemini."""
+    
+    @staticmethod
+    def call_model(
+        text: str,
+        model: str
+    ):
 
-def call_model(
-    text: str,
-    model: str
-):
+        prompt = f"""
+        Eres un sistema de análisis emocional para una aplicación
+        de apoyo terapéutico llamada DEI.
 
-    prompt = f"""
-    Eres un sistema de análisis emocional para una aplicación
-    de apoyo terapéutico llamada DEI.
+        Analiza el texto del paciente.
 
-    Analiza el texto del paciente.
+        Reglas obligatorias:
 
-    Reglas obligatorias:
+        - Responde solamente JSON válido.
+        - No uses markdown.
+        - No uses ```json.
+        - Todo debe estar en español.
 
-    - Responde solamente JSON válido.
-    - No uses markdown.
-    - No uses ```json.
-    - Todo debe estar en español.
+        Usa únicamente estos niveles:
 
-    Usa únicamente estos niveles:
+        emotion_intensity:
+        Baja
+        Media
+        Alta
 
-    emotion_intensity:
-    Baja
-    Media
-    Alta
+        risk_level:
+        Bajo
+        Medio
+        Alto
+        Crítico
 
-    risk_level:
-    Bajo
-    Medio
-    Alto
-    Crítico
+        Formato exacto:
 
-    Formato exacto:
-
-    {{
-        "primary_emotion": "",
-        "emotion_intensity": "",
-        "risk_level": "",
-        "analysis_json": {{
-            "provider": "GEMINI",
-            "model": "{model}",
-            "sentiment": "",
-            "topics": [],
-            "triggers": []
+        {{
+            "primary_emotion": "",
+            "emotion_intensity": "",
+            "risk_level": "",
+            "analysis_json": {{
+                "provider": "GEMINI",
+                "model": "{model}",
+                "sentiment": "",
+                "topics": [],
+                "triggers": []
+            }}
         }}
-    }}
 
-    Texto del paciente:
+        Texto del paciente:
 
-    {text}
-    """
+        {text}
+        """
 
-    response = client.models.generate_content(
-        model=model,
-        contents=prompt
-    )
-
-    clean_response = (
-        response.text
-        .replace("```json", "")
-        .replace("```", "")
-        .strip()
-    )
-
-    result = json.loads(
-        clean_response
-    )
-
-    result["analysis_json"]["model"] = model
-
-    return result
-
-
-def analyze_text_with_gemini(
-    text: str
-):
-
-    try:
-
-        return call_model(
-            text,
-            "gemini-2.5-flash"
+        response = client.models.generate_content(
+            model=model,
+            contents=prompt
         )
 
-    except Exception:
-
-        return call_model(
-            text,
-            "gemini-2.5-flash-lite"
+        clean_response = (
+            response.text
+            .replace("```json", "")
+            .replace("```", "")
+            .strip()
         )
+
+        result = json.loads(
+            clean_response
+        )
+
+        result["analysis_json"]["model"] = model
+
+        return result
+
+    @staticmethod
+    def analyze_text_with_gemini(
+        text: str
+    ):
+
+        try:
+
+            return GeminiAnalysisService.call_model(
+                text,
+                "gemini-2.5-flash"
+            )
+
+        except Exception:
+
+            return GeminiAnalysisService.call_model(
+                text,
+                "gemini-2.5-flash-lite"
+            )

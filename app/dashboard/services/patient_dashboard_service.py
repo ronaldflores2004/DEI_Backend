@@ -13,7 +13,7 @@ from app.recommendations.repositories.patient_recommendation_repository import (
 )
 
 from app.analysis.services.weekly_summary_service import (
-    get_weekly_summary
+    WeeklySummaryService
 )
 
 
@@ -26,9 +26,9 @@ def get_patient_dashboard(
     # RESUMEN SEMANAL
     # =====================================
 
-    weekly = get_weekly_summary(
-        patient,
-        db
+    weekly = WeeklySummaryService.get_weekly_summary(
+        patient=patient,
+        db=db
     )
 
     # =====================================

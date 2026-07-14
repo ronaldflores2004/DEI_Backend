@@ -16,6 +16,9 @@ from app.identity.schemas.patient_profile_create import (
     PatientProfileCreate
 )
 
+from app.shared.enums.role_enum import (
+    RoleEnum
+)
 
 class PatientService:
     """
@@ -29,6 +32,12 @@ class PatientService:
         current_user: User,
         profile: PatientProfileCreate,
     ) -> PatientProfile:
+        
+        if current_user.role != RoleEnum.PATIENT:
+            raise HTTPException(
+                status_code=403,
+                detail="Solo pacientes"
+            )
 
         existing_profile = (
             PatientRepository.get_by_user_id(

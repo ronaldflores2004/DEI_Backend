@@ -78,10 +78,12 @@ class GeminiAnalysisService:
             .strip()
         )
 
-        result = json.loads(
-            clean_response
-        )
+        result = json.loads(clean_response)
+        
+        result["provider"] = "GEMINI"
+        result["model"] = model
 
+        result["analysis_json"]["provider"] = "GEMINI"
         result["analysis_json"]["model"] = model
 
         return result

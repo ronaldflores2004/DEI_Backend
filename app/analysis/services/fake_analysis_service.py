@@ -85,6 +85,9 @@ def analyze_text_with_fake(text: str):
         triggers.append("Conflictos de pareja")
 
     return {
+        "provider": "FAKE_ANALYSIS",
+        "model": "RULE_ENGINE_V1",
+
         "primary_emotion": primary_emotion,
 
         "emotion_intensity": emotion_intensity,
@@ -94,6 +97,8 @@ def analyze_text_with_fake(text: str):
         "analysis_json": {
 
             "provider": "FAKE_ANALYSIS",
+
+            "model": "RULE_ENGINE_V1",
 
             "text_length": len(text),
 

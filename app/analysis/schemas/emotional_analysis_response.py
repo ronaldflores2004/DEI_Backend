@@ -14,6 +14,10 @@ class EmotionalAnalysisResponse(BaseModel):
     emotion_intensity: str | None
 
     risk_level: str | None
+    
+    provider: str
+
+    model: str
 
     analysis_json: dict
 

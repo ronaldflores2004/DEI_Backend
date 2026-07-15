@@ -11,10 +11,13 @@ from app.analysis.repositories.emotional_analysis_repository import (
     EmotionalAnalysisRepository
 )
 
-from app.analysis.services.weekly_summary_ai_service import (
-    WeeklySummaryAIService,
+from app.analysis.summary_providers.provider_factory import (
+    SummaryProviderFactory
 )
 
+from app.core.config import (
+    settings
+)
 
 NEGATIVE_EMOTIONS = [
     "Ansiedad",
@@ -189,23 +192,36 @@ class WeeklySummaryService:
 
         try:
 
-            ai_summary = (
-                WeeklySummaryAIService.generate_ai_summary(
-                    dominant_emotion,
-                    latest_emotion,
-                    risk_level,
-                    topics,
-                    triggers
+            provider = (
+                SummaryProviderFactory.get_provider(
+                    settings.AI_PROVIDER
                 )
             )
 
-        except Exception:
+            ai_summary = provider.generate(
+                dominant_emotion,
+                latest_emotion,
+                risk_level,
+                topics,
+                triggers
+            )
 
-            ai_summary = (
-                f"Durante esta semana predominó "
-                f"{dominant_emotion}. "
-                f"Tu emoción más reciente fue "
-                f"{latest_emotion}."
+        except Exception as e:
+
+            print(e)
+
+            provider = (
+                SummaryProviderFactory.get_provider(
+                    "FAKE"
+                )
+            )
+
+            ai_summary = provider.generate(
+                dominant_emotion,
+                latest_emotion,
+                risk_level,
+                topics,
+                triggers
             )
 
         return {

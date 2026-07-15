@@ -22,13 +22,9 @@ from app.recommendations.schemas.patient_recommendation_response import (
 )
 
 from app.recommendations.services.patient_recommendation_service import (
-    create_recommendation,
-    get_my_recommendations
+    PatientRecommendationService
 )
 
-from app.recommendations.services.patient_recommendation_generator_service import (
-    generate_from_analysis
-)
 
 router = APIRouter(
     prefix="/recommendations",
@@ -53,7 +49,7 @@ def create(
     )
 ):
 
-    return create_recommendation(
+    return PatientRecommendationService.create_recommendation(
         analysis_id=analysis_id,
         patient=patient,
         data=data,
@@ -76,7 +72,7 @@ def list_my(
     )
 ):
 
-    return get_my_recommendations(
+    return PatientRecommendationService.get_my_recommendations(
         patient=patient,
         db=db
     )
@@ -98,7 +94,7 @@ def generate(
     )
 ):
 
-    return generate_from_analysis(
+    return PatientRecommendationService.generate_from_analysis(
         analysis_id=analysis_id,
         patient=patient,
         db=db

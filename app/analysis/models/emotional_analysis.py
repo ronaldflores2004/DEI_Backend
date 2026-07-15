@@ -60,6 +60,16 @@ class EmotionalAnalysis(Base):
         nullable=True
     )
 
+    provider = Column(
+        String,
+        nullable=False
+    )
+
+    model = Column(
+        String,
+        nullable=False
+    )
+    
     analysis_json = Column(
         JSON,
         nullable=False

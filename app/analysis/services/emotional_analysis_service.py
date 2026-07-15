@@ -28,12 +28,8 @@ from app.analysis.repositories.transcription_repository import (
     TranscriptionRepository
 )
 
-from app.analysis.services.fake_analysis_service import (
-    analyze_text_with_fake
-)
-
-from app.analysis.services.gemini_analysis_service import (
-    GeminiAnalysisService,
+from app.analysis.providers.provider_factory import (
+    AnalysisProviderFactory
 )
 
 from app.shared.enums.entry_type_enum import (
@@ -43,6 +39,8 @@ from app.shared.enums.entry_type_enum import (
 from app.analysis.schemas.emotional_analysis_create import (
     EmotionalAnalysisCreate
 )
+
+from app.core.config import settings
 
 class EmotionalAnalysisService:
     """
@@ -105,6 +103,8 @@ class EmotionalAnalysisService:
             primary_emotion=data.primary_emotion,
             emotion_intensity=data.emotion_intensity,
             risk_level=data.risk_level,
+            provider="MANUAL",
+            model="MANUAL",
             analysis_json=data.analysis_json
         )
 
@@ -222,18 +222,27 @@ class EmotionalAnalysisService:
 
         try:
 
-            result = (
-                GeminiAnalysisService.analyze_text_with_gemini(
-                    text_to_analyze
+            provider = (
+                AnalysisProviderFactory.get_provider(
+                    settings.AI_PROVIDER
                 )
+            )
+            
+            result = provider.analyze(
+                text_to_analyze
             )
 
         except Exception as e:
 
-            print("ERROR GEMINI:")
             print(e)
 
-            result = analyze_text_with_fake(
+            provider = (
+                AnalysisProviderFactory.get_provider(
+                    settings.AI_FALLBACK_PROVIDER
+                )
+            )
+
+            result = provider.analyze(
                 text_to_analyze
             )
 
@@ -253,6 +262,14 @@ class EmotionalAnalysisService:
                 result["risk_level"]
             )
 
+            existing.provider = (
+                result["provider"]
+            )
+
+            existing.model = (
+                result["model"]
+            )
+            
             existing.analysis_json = (
                 result["analysis_json"]
             )
@@ -273,6 +290,8 @@ class EmotionalAnalysisService:
             primary_emotion=result["primary_emotion"],
             emotion_intensity=result["emotion_intensity"],
             risk_level=result["risk_level"],
+            provider=result["provider"],
+            model=result["model"],
             analysis_json=result["analysis_json"]
         )
 

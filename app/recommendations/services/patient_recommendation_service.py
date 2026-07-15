@@ -26,89 +26,199 @@ from app.recommendations.schemas.patient_recommendation_create import (
     PatientRecommendationCreate
 )
 
+from app.recommendations.providers.provider_factory import (
+    RecommendationProviderFactory
+)
 
-# =====================================
-# Crear recomendación manual
-# =====================================
+from app.core.config import settings
 
-def create_recommendation(
-    analysis_id: int,
-    patient: PatientProfile,
-    data: PatientRecommendationCreate,
-    db: Session
-):
 
-    analysis = EmotionalAnalysisRepository.get_by_id(
-        db=db,
-        analysis_id=analysis_id
-    )
+class PatientRecommendationService:
+    """
+    Servicio encargado de la gestión de
+    recomendaciones para pacientes.
+    """
 
-    if not analysis:
-        raise HTTPException(
-            status_code=404,
-            detail="Análisis no encontrado"
-        )
+    
+    
+    @staticmethod
+    def _validate_analysis_owner(
+        analysis_id: int,
+        patient: PatientProfile,
+        db: Session,
+    ):
 
-    entry = EmotionalEntryRepository.get_by_id(
-        db=db,
-        entry_id=analysis.entry_id
-    )
-
-    if not entry:
-        raise HTTPException(
-            status_code=404,
-            detail="Entrada no encontrada"
-        )
-
-    if entry.patient_id != patient.id:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes acceso a este análisis"
-        )
-
-    existing = (
-        PatientRecommendationRepository.get_by_analysis(
+        analysis = EmotionalAnalysisRepository.get_by_id(
             db=db,
             analysis_id=analysis_id
         )
-    )
 
-    if existing:
-        raise HTTPException(
-            status_code=400,
-            detail="Este análisis ya tiene una recomendación"
-        )
+        if not analysis:
+            raise HTTPException(
+                status_code=404,
+                detail="Análisis no encontrado"
+            )
 
-    recommendation = PatientRecommendation(
-        patient_id=patient.id,
-        analysis_id=analysis_id,
-        title=data.title,
-        content=data.content,
-        source=data.source
-    )
-
-    recommendation = (
-        PatientRecommendationRepository.create(
+        entry = EmotionalEntryRepository.get_by_id(
             db=db,
-            recommendation=recommendation
+            entry_id=analysis.entry_id
         )
-    )
 
-    return recommendation
+        if not entry:
+            raise HTTPException(
+                status_code=404,
+                detail="Entrada no encontrada"
+            )
 
+        if entry.patient_id != patient.id:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes acceso a este análisis"
+            )
 
-# =====================================
-# Obtener recomendaciones del paciente
-# =====================================
+        return analysis
+    # =====================================
+    # Crear recomendación manual
+    # =====================================
+    
+    @staticmethod
+    def create_recommendation(
+        analysis_id: int,
+        patient: PatientProfile,
+        data: PatientRecommendationCreate,
+        db: Session
+    ):
 
-def get_my_recommendations(
-    patient: PatientProfile,
-    db: Session
-):
-
-    return (
-        PatientRecommendationRepository.get_by_patient(
-            db=db,
-            patient_id=patient.id
+        analysis = PatientRecommendationService._validate_analysis_owner(
+            analysis_id=analysis_id,
+            patient=patient,
+            db=db
         )
-    )
+
+        existing = (
+            PatientRecommendationRepository.get_by_analysis(
+                db=db,
+                analysis_id=analysis_id
+            )
+        )
+
+        if existing:
+            raise HTTPException(
+                status_code=400,
+                detail="Este análisis ya tiene una recomendación"
+            )
+
+        recommendation = PatientRecommendation(
+            patient_id=patient.id,
+            analysis_id=analysis_id,
+            title=data.title,
+            content=data.content,
+            source=data.source
+        )
+
+        recommendation = (
+            PatientRecommendationRepository.create(
+                db=db,
+                recommendation=recommendation
+            )
+        )
+
+        return recommendation
+
+
+    # =====================================
+    # Obtener recomendaciones del paciente
+    # =====================================
+    @staticmethod
+    def get_my_recommendations(
+        patient: PatientProfile,
+        db: Session
+    ):
+
+        return (
+            PatientRecommendationRepository.get_by_patient(
+                db=db,
+                patient_id=patient.id
+            )
+        )
+    
+    # =====================================
+    # Generar recomendación desde análisis
+    # =====================================
+    @staticmethod
+    def generate_from_analysis(
+        analysis_id: int,
+        patient: PatientProfile,
+        db: Session
+    ):
+
+        # =====================================
+        # Buscar análisis
+        # =====================================
+
+        analysis = PatientRecommendationService._validate_analysis_owner(
+            analysis_id=analysis_id,
+            patient=patient,
+            db=db
+        )
+
+        # =====================================
+        # Evitar duplicados
+        # =====================================
+
+        existing = (
+            PatientRecommendationRepository.get_by_analysis(
+                db=db,
+                analysis_id=analysis_id
+            )
+        )
+
+        if existing:
+            return existing
+
+        # =====================================
+        # Generar contenido
+        # =====================================
+
+        try:
+
+            provider = (
+                RecommendationProviderFactory.get_provider(
+                    settings.AI_PROVIDER
+                )
+            )
+
+            recommendation_data = provider.generate(
+                analysis
+            )
+
+        except Exception as e:
+
+            print(e)
+
+            provider = (
+                RecommendationProviderFactory.get_provider(
+                    settings.AI_FALLBACK_PROVIDER
+                )
+            )
+
+            recommendation_data = provider.generate(
+                analysis
+            )
+
+        recommendation = PatientRecommendation(
+            patient_id=patient.id,
+            analysis_id=analysis.id,
+            title=recommendation_data["title"],
+            content=recommendation_data["content"],
+            source=recommendation_data["source"]
+        )
+
+        recommendation = (
+            PatientRecommendationRepository.create(
+                db=db,
+                recommendation=recommendation
+            )
+        )
+
+        return recommendation

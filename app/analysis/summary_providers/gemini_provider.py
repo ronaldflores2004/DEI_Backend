@@ -4,46 +4,56 @@ from app.core.config import (
     GEMINI_API_KEY
 )
 
+from app.analysis.summary_providers.base_provider import (
+    BaseSummaryProvider
+)
+
 client = genai.Client(
     api_key=GEMINI_API_KEY
 )
 
-class WeeklySummaryAIService:
-    """Servicio para generar resúmenes semanales usando Gemini."""
 
-    @staticmethod
-    def generate_ai_summary(
+class GeminiSummaryProvider(
+    BaseSummaryProvider
+):
+    """
+    Proveedor de resúmenes semanales
+    usando Gemini.
+    """
+
+    def generate(
+        self,
         dominant_emotion: str,
         latest_emotion: str,
         risk_level: str,
         topics: list,
-        triggers: list
-    ):
+        triggers: list,
+    ) -> str:
 
         prompt = f"""
-    Genera un resumen breve para un paciente.
+Genera un resumen breve para un paciente.
 
-    Emoción predominante:
-    {dominant_emotion}
+Emoción predominante:
+{dominant_emotion}
 
-    Última emoción:
-    {latest_emotion}
+Última emoción:
+{latest_emotion}
 
-    Nivel de riesgo:
-    {risk_level}
+Nivel de riesgo:
+{risk_level}
 
-    Temas identificados:
-    {topics}
+Temas identificados:
+{topics}
 
-    Desencadenantes identificados:
-    {triggers}
+Desencadenantes identificados:
+{triggers}
 
-    Reglas:
-    - Lenguaje sencillo.
-    - Español.
-    - Máximo 2 oraciones.
-    - No hagas diagnósticos.
-    """
+Reglas:
+- Lenguaje sencillo.
+- Español.
+- Máximo 2 oraciones.
+- No hagas diagnósticos.
+"""
 
         try:
 

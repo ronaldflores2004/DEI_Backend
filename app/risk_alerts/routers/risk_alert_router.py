@@ -17,7 +17,7 @@ from app.risk_alerts.schemas.risk_alert_response import (
 )
 
 from app.risk_alerts.services.risk_alert_service import (
-    get_risk_alerts
+    RiskAlertService
 )
 
 router = APIRouter(
@@ -45,7 +45,7 @@ def risk_alerts(
     if not professional:
         return []
 
-    return get_risk_alerts(
+    return RiskAlertService.get_risk_alerts(
         professional.id,
         db
     )

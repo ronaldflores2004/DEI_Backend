@@ -17,8 +17,7 @@ from app.sessions.schemas.clinical_note_response import (
 )
 
 from app.sessions.services.clinical_note_service import (
-    create_note,
-    get_notes
+    ClinicalNoteService
 )
 
 router = APIRouter(
@@ -38,7 +37,7 @@ def create_clinical_note(
     current_user: User = Depends(get_current_user)
 ):
 
-    return create_note(
+    return ClinicalNoteService.create_note(
         session_id,
         current_user.id,
         data,
@@ -56,7 +55,7 @@ def list_clinical_notes(
     current_user: User = Depends(get_current_user)
 ):
 
-    return get_notes(
+    return ClinicalNoteService.get_notes(
         session_id,
         current_user.id,
         db

@@ -7,78 +7,83 @@ from app.notifications.repositories.notification_repository import (
 )
 
 
-def get_notifications(
-    current_user_id: int,
-    db: Session
-):
 
-    return (
-        NotificationRepository.get_by_user(
-            db=db,
-            user_id=current_user_id
-        )
-    )
+class NotificationService:
+    
+    @staticmethod
+    def get_notifications(
+        current_user_id: int,
+        db: Session
+    ):
 
-
-def mark_as_read(
-    notification_id: int,
-    current_user_id: int,
-    db: Session
-):
-
-    notification = (
-        NotificationRepository.get_by_id(
-            db=db,
-            notification_id=notification_id
-        )
-    )
-
-    if not notification:
-        raise HTTPException(
-            status_code=404,
-            detail="Notificación no encontrada"
+        return (
+            NotificationRepository.get_by_user(
+                db=db,
+                user_id=current_user_id
+            )
         )
 
-    if notification.user_id != current_user_id:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes acceso a esta notificación"
+
+    @staticmethod
+    def mark_as_read(
+        notification_id: int,
+        current_user_id: int,
+        db: Session
+    ):
+
+        notification = (
+            NotificationRepository.get_by_id(
+                db=db,
+                notification_id=notification_id
+            )
         )
 
-    notification.is_read = True
+        if not notification:
+            raise HTTPException(
+                status_code=404,
+                detail="Notificación no encontrada"
+            )
 
-    return (
-        NotificationRepository.update(
-            db=db,
-            notification=notification
+        if notification.user_id != current_user_id:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes acceso a esta notificación"
+            )
+
+        notification.is_read = True
+
+        return (
+            NotificationRepository.update(
+                db=db,
+                notification=notification
+            )
         )
-    )
 
+    @staticmethod
+    def get_notification_summary(
+        current_user_id: int,
+        db: Session
+    ):
 
-def get_notification_summary(
-    current_user_id: int,
-    db: Session
-):
-
-    total = (
-        NotificationRepository.count_by_user(
-            db=db,
-            user_id=current_user_id
+        total = (
+            NotificationRepository.count_by_user(
+                db=db,
+                user_id=current_user_id
+            )
         )
-    )
 
-    unread = (
-        NotificationRepository.count_unread(
-            db=db,
-            user_id=current_user_id
+        unread = (
+            NotificationRepository.count_unread(
+                db=db,
+                user_id=current_user_id
+            )
         )
-    )
 
-    return {
+        return {
 
-        "total":
-            total,
+            "total":
+                total,
 
-        "unread":
-            unread
-    }
+            "unread":
+                unread
+        }

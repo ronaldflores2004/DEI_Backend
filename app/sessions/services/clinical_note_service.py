@@ -23,122 +23,126 @@ from app.therapy.services.access_policy_service import (
 )
 
 
-def create_note(
-    session_id: int,
-    current_user_id: int,
-    data,
-    db: Session
-):
 
-    professional = (
-        ProfessionalRepository.get_by_user_id(
-            db=db,
-            user_id=current_user_id
-        )
-    )
+class ClinicalNoteService:
 
-    if not professional:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes perfil profesional"
-        )
-
-    session = (
-        TherapySessionRepository.get_by_id(
-            db=db,
-            session_id=session_id
-        )
-    )
-
-    if not session:
-        raise HTTPException(
-            status_code=404,
-            detail="Sesión no encontrada"
-        )
-
-    if session.professional_id != professional.id:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes acceso a esta sesión"
-        )
-
-    if not has_active_consent(
-        patient_id=session.patient_id,
-        professional_id=professional.id,
-        db=db
+    @staticmethod
+    def create_note(
+        session_id: int,
+        current_user_id: int,
+        data,
+        db: Session
     ):
-        raise HTTPException(
-            status_code=403,
-            detail="No existe consentimiento activo"
+
+        professional = (
+            ProfessionalRepository.get_by_user_id(
+                db=db,
+                user_id=current_user_id
+            )
         )
 
-    note = ClinicalNote(
-        session_id=session.id,
-        professional_id=professional.id,
-        note=data.note
-    )
+        if not professional:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes perfil profesional"
+            )
 
-    note = (
-        ClinicalNoteRepository.create(
-            db=db,
-            note=note
-        )
-    )
-
-    return note
-
-
-def get_notes(
-    session_id: int,
-    current_user_id: int,
-    db: Session
-):
-
-    professional = (
-        ProfessionalRepository.get_by_user_id(
-            db=db,
-            user_id=current_user_id
-        )
-    )
-
-    if not professional:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes perfil profesional"
+        session = (
+            TherapySessionRepository.get_by_id(
+                db=db,
+                session_id=session_id
+            )
         )
 
-    session = (
-        TherapySessionRepository.get_by_id(
-            db=db,
-            session_id=session_id
-        )
-    )
+        if not session:
+            raise HTTPException(
+                status_code=404,
+                detail="Sesión no encontrada"
+            )
 
-    if not session:
-        raise HTTPException(
-            status_code=404,
-            detail="Sesión no encontrada"
+        if session.professional_id != professional.id:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes acceso a esta sesión"
+            )
+
+        if not has_active_consent(
+            patient_id=session.patient_id,
+            professional_id=professional.id,
+            db=db
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="No existe consentimiento activo"
+            )
+
+        note = ClinicalNote(
+            session_id=session.id,
+            professional_id=professional.id,
+            note=data.note
         )
 
-    if session.professional_id != professional.id:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes acceso a esta sesión"
+        note = (
+            ClinicalNoteRepository.create(
+                db=db,
+                note=note
+            )
         )
 
-    if not has_active_consent(
-        patient_id=session.patient_id,
-        professional_id=professional.id,
-        db=db
+        return note
+
+    @staticmethod
+    def get_notes(
+        session_id: int,
+        current_user_id: int,
+        db: Session
     ):
-        raise HTTPException(
-            status_code=403,
-            detail="No existe consentimiento activo"
+
+        professional = (
+            ProfessionalRepository.get_by_user_id(
+                db=db,
+                user_id=current_user_id
+            )
         )
 
-    return (
-        ClinicalNoteRepository.get_by_session(
-            db=db,
-            session_id=session_id
+        if not professional:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes perfil profesional"
+            )
+
+        session = (
+            TherapySessionRepository.get_by_id(
+                db=db,
+                session_id=session_id
+            )
         )
-    )
+
+        if not session:
+            raise HTTPException(
+                status_code=404,
+                detail="Sesión no encontrada"
+            )
+
+        if session.professional_id != professional.id:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes acceso a esta sesión"
+            )
+
+        if not has_active_consent(
+            patient_id=session.patient_id,
+            professional_id=professional.id,
+            db=db
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="No existe consentimiento activo"
+            )
+
+        return (
+            ClinicalNoteRepository.get_by_session(
+                db=db,
+                session_id=session_id
+            )
+        )

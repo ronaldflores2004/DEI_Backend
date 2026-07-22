@@ -17,18 +17,14 @@ from app.sessions.schemas.therapy_session_response import (
 )
 
 from app.sessions.services.therapy_session_service import (
-    create_session,
-    get_sessions
+    TherapySessionService
 )
 
 from app.sessions.schemas.session_status_response import (
     SessionStatusResponse
 )
 
-from app.sessions.services.therapy_session_service import (
-    complete_session,
-    cancel_session
-)
+
 
 router = APIRouter(
     prefix="/sessions",
@@ -46,7 +42,7 @@ def create_therapy_session(
     current_user: User = Depends(get_current_user)
 ):
 
-    return create_session(
+    return TherapySessionService.create_session(
         current_user.id,
         data,
         db
@@ -62,7 +58,7 @@ def list_sessions(
     current_user: User = Depends(get_current_user)
 ):
 
-    return get_sessions(
+    return TherapySessionService.get_sessions(
         current_user.id,
         db
     )
@@ -77,7 +73,7 @@ def complete_therapy_session(
     current_user: User = Depends(get_current_user)
 ):
 
-    return complete_session(
+    return TherapySessionService.complete_session(
         session_id,
         current_user.id,
         db
@@ -94,7 +90,7 @@ def cancel_therapy_session(
     current_user: User = Depends(get_current_user)
 ):
 
-    return cancel_session(
+    return TherapySessionService.cancel_session(
         session_id,
         current_user.id,
         db

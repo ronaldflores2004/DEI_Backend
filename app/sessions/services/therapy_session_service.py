@@ -35,237 +35,241 @@ from app.therapy.services.access_policy_service import (
 )
 
 
-def create_session(
-    current_user_id: int,
-    data,
-    db: Session
-):
 
-    professional = (
-        ProfessionalRepository.get_by_user_id(
-            db=db,
-            user_id=current_user_id
-        )
-    )
-
-    if not professional:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes perfil profesional"
-        )
-
-    patient = (
-        PatientRepository.get_by_id(
-            db=db,
-            patient_id=data.patient_id
-        )
-    )
-
-    if not patient:
-        raise HTTPException(
-            status_code=404,
-            detail="Paciente no encontrado"
-        )
-
-    relation = (
-        PatientProfessionalRepository.get_active_relation(
-            db=db,
-            patient_id=patient.id,
-            professional_id=professional.id
-        )
-    )
-
-    if not relation:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes acceso a este paciente"
-        )
-
-    if not has_active_consent(
-        patient_id=patient.id,
-        professional_id=professional.id,
-        db=db
+class TherapySessionService:
+    
+    @staticmethod
+    def create_session(
+        current_user_id: int,
+        data,
+        db: Session
     ):
-        raise HTTPException(
-            status_code=403,
-            detail="No existe consentimiento activo"
+
+        professional = (
+            ProfessionalRepository.get_by_user_id(
+                db=db,
+                user_id=current_user_id
+            )
         )
 
-    session = TherapySession(
-        patient_id=patient.id,
-        professional_id=professional.id,
-        session_date=data.session_date,
-        status="SCHEDULED"
-    )
+        if not professional:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes perfil profesional"
+            )
 
-    session = (
-        TherapySessionRepository.create(
+        patient = (
+            PatientRepository.get_by_id(
+                db=db,
+                patient_id=data.patient_id
+            )
+        )
+
+        if not patient:
+            raise HTTPException(
+                status_code=404,
+                detail="Paciente no encontrado"
+            )
+
+        relation = (
+            PatientProfessionalRepository.get_active_relation(
+                db=db,
+                patient_id=patient.id,
+                professional_id=professional.id
+            )
+        )
+
+        if not relation:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes acceso a este paciente"
+            )
+
+        if not has_active_consent(
+            patient_id=patient.id,
+            professional_id=professional.id,
+            db=db
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="No existe consentimiento activo"
+            )
+
+        session = TherapySession(
+            patient_id=patient.id,
+            professional_id=professional.id,
+            session_date=data.session_date,
+            status="SCHEDULED"
+        )
+
+        session = (
+            TherapySessionRepository.create(
+                db=db,
+                session=session
+            )
+        )
+
+        # Se mantiene aquí hasta el Sprint Notifications
+        notification = Notification(
+            user_id=patient.user_id,
+            title="Nueva sesión programada",
+            message=(
+                f"Tienes una sesión terapéutica "
+                f"programada para "
+                f"{data.session_date}"
+            ),
+            type="SESSION"
+        )
+
+        NotificationRepository.create(
             db=db,
-            session=session
-        )
-    )
-
-    # Se mantiene aquí hasta el Sprint Notifications
-    notification = Notification(
-        user_id=patient.user_id,
-        title="Nueva sesión programada",
-        message=(
-            f"Tienes una sesión terapéutica "
-            f"programada para "
-            f"{data.session_date}"
-        ),
-        type="SESSION"
-    )
-
-    NotificationRepository.create(
-        db=db,
-        notification=notification
-    )
-
-    return session
-
-
-def get_sessions(
-    current_user_id: int,
-    db: Session
-):
-
-    professional = (
-        ProfessionalRepository.get_by_user_id(
-            db=db,
-            user_id=current_user_id
-        )
-    )
-
-    if not professional:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes perfil profesional"
+            notification=notification
         )
 
-    return (
-        TherapySessionRepository.get_by_professional(
-            db=db,
-            professional_id=professional.id
-        )
-    )
+        return session
 
+    @staticmethod
+    def get_sessions(
+        current_user_id: int,
+        db: Session
+    ):
 
-def complete_session(
-    session_id: int,
-    current_user_id: int,
-    db: Session
-):
-
-    professional = (
-        ProfessionalRepository.get_by_user_id(
-            db=db,
-            user_id=current_user_id
-        )
-    )
-
-    if not professional:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes perfil profesional"
+        professional = (
+            ProfessionalRepository.get_by_user_id(
+                db=db,
+                user_id=current_user_id
+            )
         )
 
-    session = (
-        TherapySessionRepository.get_by_id(
-            db=db,
-            session_id=session_id
-        )
-    )
+        if not professional:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes perfil profesional"
+            )
 
-    if not session:
-        raise HTTPException(
-            status_code=404,
-            detail="Sesión no encontrada"
-        )
-
-    if session.professional_id != professional.id:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes acceso a esta sesión"
+        return (
+            TherapySessionRepository.get_by_professional(
+                db=db,
+                professional_id=professional.id
+            )
         )
 
-    if session.status == "COMPLETED":
-        raise HTTPException(
-            status_code=400,
-            detail="La sesión ya fue completada"
+    @staticmethod
+    def complete_session(
+        session_id: int,
+        current_user_id: int,
+        db: Session
+    ):
+
+        professional = (
+            ProfessionalRepository.get_by_user_id(
+                db=db,
+                user_id=current_user_id
+            )
         )
 
-    if session.status == "CANCELLED":
-        raise HTTPException(
-            status_code=400,
-            detail="La sesión fue cancelada"
+        if not professional:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes perfil profesional"
+            )
+
+        session = (
+            TherapySessionRepository.get_by_id(
+                db=db,
+                session_id=session_id
+            )
         )
 
-    session.status = "COMPLETED"
+        if not session:
+            raise HTTPException(
+                status_code=404,
+                detail="Sesión no encontrada"
+            )
 
-    return (
-        TherapySessionRepository.update(
-            db=db,
-            session=session
-        )
-    )
+        if session.professional_id != professional.id:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes acceso a esta sesión"
+            )
 
+        if session.status == "COMPLETED":
+            raise HTTPException(
+                status_code=400,
+                detail="La sesión ya fue completada"
+            )
 
-def cancel_session(
-    session_id: int,
-    current_user_id: int,
-    db: Session
-):
+        if session.status == "CANCELLED":
+            raise HTTPException(
+                status_code=400,
+                detail="La sesión fue cancelada"
+            )
 
-    professional = (
-        ProfessionalRepository.get_by_user_id(
-            db=db,
-            user_id=current_user_id
-        )
-    )
+        session.status = "COMPLETED"
 
-    if not professional:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes perfil profesional"
-        )
-
-    session = (
-        TherapySessionRepository.get_by_id(
-            db=db,
-            session_id=session_id
-        )
-    )
-
-    if not session:
-        raise HTTPException(
-            status_code=404,
-            detail="Sesión no encontrada"
+        return (
+            TherapySessionRepository.update(
+                db=db,
+                session=session
+            )
         )
 
-    if session.professional_id != professional.id:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes acceso a esta sesión"
+    @staticmethod
+    def cancel_session(
+        session_id: int,
+        current_user_id: int,
+        db: Session
+    ):
+
+        professional = (
+            ProfessionalRepository.get_by_user_id(
+                db=db,
+                user_id=current_user_id
+            )
         )
 
-    if session.status == "CANCELLED":
-        raise HTTPException(
-            status_code=400,
-            detail="La sesión ya fue cancelada"
+        if not professional:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes perfil profesional"
+            )
+
+        session = (
+            TherapySessionRepository.get_by_id(
+                db=db,
+                session_id=session_id
+            )
         )
 
-    if session.status == "COMPLETED":
-        raise HTTPException(
-            status_code=400,
-            detail="La sesión ya fue completada"
-        )
+        if not session:
+            raise HTTPException(
+                status_code=404,
+                detail="Sesión no encontrada"
+            )
 
-    session.status = "CANCELLED"
+        if session.professional_id != professional.id:
+            raise HTTPException(
+                status_code=403,
+                detail="No tienes acceso a esta sesión"
+            )
 
-    return (
-        TherapySessionRepository.update(
-            db=db,
-            session=session
+        if session.status == "CANCELLED":
+            raise HTTPException(
+                status_code=400,
+                detail="La sesión ya fue cancelada"
+            )
+
+        if session.status == "COMPLETED":
+            raise HTTPException(
+                status_code=400,
+                detail="La sesión ya fue completada"
+            )
+
+        session.status = "CANCELLED"
+
+        return (
+            TherapySessionRepository.update(
+                db=db,
+                session=session
+            )
         )
-    )

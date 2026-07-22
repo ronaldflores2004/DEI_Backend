@@ -17,17 +17,14 @@ from app.notifications.schemas.notification_read_response import (
 )
 
 from app.notifications.services.notification_service import (
-    get_notifications,
-    mark_as_read
+    NotificationService
 )
 
 from app.notifications.schemas.notification_summary_response import (
     NotificationSummaryResponse
 )
 
-from app.notifications.services.notification_service import (
-    get_notification_summary
-)
+
 
 router = APIRouter(
     prefix="/notifications",
@@ -44,7 +41,7 @@ def list_notifications(
     current_user: User = Depends(get_current_user)
 ):
 
-    return get_notifications(
+    return NotificationService.get_notifications(
         current_user.id,
         db
     )
@@ -60,7 +57,7 @@ def read_notification(
     current_user: User = Depends(get_current_user)
 ):
 
-    return mark_as_read(
+    return NotificationService.mark_as_read(
         notification_id,
         current_user.id,
         db
@@ -75,7 +72,7 @@ def notification_summary(
     current_user: User = Depends(get_current_user)
 ):
 
-    return get_notification_summary(
+    return NotificationService.get_notification_summary(
         current_user.id,
         db
     )

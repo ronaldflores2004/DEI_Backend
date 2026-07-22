@@ -14,7 +14,7 @@ from app.therapy_insights.schemas.therapy_insight_response import (
 )
 
 from app.therapy_insights.services.insight_generator_service import (
-    generate_insights
+    TherapyInsightService
 )
 
 from app.therapy.services.access_policy_service import (
@@ -86,7 +86,7 @@ def get_patient_insights(
             detail="No existe consentimiento activo"
         )
 
-    return generate_insights(
-        patient_id,
-        db
+    return TherapyInsightService.generate_insights(
+        patient_id=patient_id,
+        db=db
     )

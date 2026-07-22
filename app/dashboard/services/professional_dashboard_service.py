@@ -17,7 +17,7 @@ from app.analysis.repositories.emotional_analysis_repository import (
 )
 
 from app.therapy_insights.services.insight_generator_service import (
-    generate_insights
+    TherapyInsightService
 )
 
 from app.therapy.services.access_policy_service import (
@@ -103,9 +103,9 @@ class ProfessionalDashboardService:
                         patient_id
                     )
 
-            insights = generate_insights(
-                patient_id,
-                db
+            insights = TherapyInsightService.generate_insights(
+                patient_id=patient_id,
+                db=db
             )
 
             total_insights += len(insights)

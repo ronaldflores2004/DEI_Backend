@@ -14,6 +14,10 @@ from app.therapy.services.access_policy_service import (
     has_active_consent
 )
 
+from app.shared.enums.risk_level_enum import (
+    RiskLevelEnum
+)
+
 class RiskAlertService:
     
     @staticmethod
@@ -59,10 +63,10 @@ class RiskAlertService:
         patient_data = defaultdict(list)
 
         risk_order = {
-            "Bajo": 1,
-            "Medio": 2,
-            "Alto": 3,
-            "Crítico": 4
+            RiskLevelEnum.LOW: 1,
+            RiskLevelEnum.MEDIUM: 2,
+            RiskLevelEnum.HIGH: 3,
+            RiskLevelEnum.CRITICAL: 4
         }
 
         negative_emotions = [
@@ -79,9 +83,9 @@ class RiskAlertService:
         for analysis, entry in analyses:
 
             if analysis.risk_level not in [
-                "Medio",
-                "Alto",
-                "Crítico"
+                RiskLevelEnum.MEDIUM,
+                RiskLevelEnum.HIGH,
+                RiskLevelEnum.CRITICAL
             ]:
                 continue
 

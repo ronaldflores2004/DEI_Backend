@@ -10,6 +10,9 @@ from app.analysis.models.emotional_analysis import (
     EmotionalAnalysis,
 )
 
+from app.shared.enums.risk_level_enum import (
+    RiskLevelEnum
+)
 
 class EmotionalAnalysisRepository:
     """
@@ -188,9 +191,9 @@ class EmotionalAnalysisRepository:
                 EmotionalEntry.is_archived.is_(False),
                 EmotionalAnalysis.risk_level.in_(
                     [
-                        "Medio",
-                        "Alto",
-                        "Crítico"
+                        RiskLevelEnum.MEDIUM,
+                        RiskLevelEnum.HIGH,
+                        RiskLevelEnum.CRITICAL
                     ]
                 )
             )

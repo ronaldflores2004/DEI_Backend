@@ -34,6 +34,13 @@ from app.therapy.services.access_policy_service import (
     has_active_consent
 )
 
+from app.shared.enums.session_status_enum import (
+    SessionStatusEnum
+)
+
+from app.shared.enums.notification_type_enum import (
+    NotificationTypeEnum
+)
 
 
 class TherapySessionService:
@@ -99,7 +106,7 @@ class TherapySessionService:
             patient_id=patient.id,
             professional_id=professional.id,
             session_date=data.session_date,
-            status="SCHEDULED"
+            status=SessionStatusEnum.SCHEDULED
         )
 
         session = (
@@ -118,7 +125,7 @@ class TherapySessionService:
                 f"programada para "
                 f"{data.session_date}"
             ),
-            type="SESSION"
+            type=NotificationTypeEnum.SESSION
         )
 
         NotificationRepository.create(
@@ -193,19 +200,19 @@ class TherapySessionService:
                 detail="No tienes acceso a esta sesión"
             )
 
-        if session.status == "COMPLETED":
+        if session.status == SessionStatusEnum.COMPLETED:
             raise HTTPException(
                 status_code=400,
                 detail="La sesión ya fue completada"
             )
 
-        if session.status == "CANCELLED":
+        if session.status == SessionStatusEnum.CANCELLED:
             raise HTTPException(
                 status_code=400,
                 detail="La sesión fue cancelada"
             )
 
-        session.status = "COMPLETED"
+        session.status = SessionStatusEnum.COMPLETED
 
         return (
             TherapySessionRepository.update(
@@ -253,19 +260,19 @@ class TherapySessionService:
                 detail="No tienes acceso a esta sesión"
             )
 
-        if session.status == "CANCELLED":
+        if session.status == SessionStatusEnum.CANCELLED:
             raise HTTPException(
                 status_code=400,
                 detail="La sesión ya fue cancelada"
             )
 
-        if session.status == "COMPLETED":
+        if session.status == SessionStatusEnum.COMPLETED:
             raise HTTPException(
                 status_code=400,
                 detail="La sesión ya fue completada"
             )
 
-        session.status = "CANCELLED"
+        session.status = SessionStatusEnum.CANCELLED
 
         return (
             TherapySessionRepository.update(

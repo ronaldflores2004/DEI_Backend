@@ -15,6 +15,8 @@ from app.analysis.summary_providers.provider_factory import (
     SummaryProviderFactory
 )
 
+from app.shared.enums.emotion_intensity_enum import EmotionIntensityEnum
+
 from app.core.config import (
     settings
 )
@@ -44,18 +46,18 @@ class WeeklySummaryService:
     @staticmethod
     def _calculate_average_intensity(
         intensities: list[str],
-    ) -> str:
+    ) -> EmotionIntensityEnum:
 
         intensity_values = {
-            "Baja": 1,
-            "Media": 2,
-            "Alta": 3,
+            EmotionIntensityEnum.LOW: 1,
+            EmotionIntensityEnum.MEDIUM: 2,
+            EmotionIntensityEnum.HIGH: 3,
         }
 
         reverse_values = {
-            1: "Baja",
-            2: "Media",
-            3: "Alta",
+            1: EmotionIntensityEnum.LOW,
+            2: EmotionIntensityEnum.MEDIUM,
+            3: EmotionIntensityEnum.HIGH,
         }
 
         valid = [
@@ -65,7 +67,7 @@ class WeeklySummaryService:
         ]
 
         if not valid:
-            return "Baja"
+            return EmotionIntensityEnum.LOW
 
         average = round(
             sum(

@@ -6,6 +6,9 @@ from app.core.config import (
     GEMINI_API_KEY
 )
 
+from app.shared.enums.risk_level_enum import RiskLevelEnum
+from app.shared.enums.emotion_intensity_enum import EmotionIntensityEnum
+
 
 client = genai.Client(
     api_key=GEMINI_API_KEY
@@ -31,20 +34,22 @@ class GeminiAnalysisService:
         - Responde solamente JSON válido.
         - No uses markdown.
         - No uses ```json.
-        - Todo debe estar en español.
+        - Todo el contenido descriptivo debe estar en español.
+        - Los valores de los enums deben escribirse EXACTAMENTE como se indican.
+        - No traduzcas LOW, MEDIUM, HIGH ni CRITICAL.
 
         Usa únicamente estos niveles:
 
         emotion_intensity:
-        Baja
-        Media
-        Alta
+        LOW
+        MEDIUM
+        HIGH
 
         risk_level:
-        Bajo
-        Medio
-        Alto
-        Crítico
+        LOW
+        MEDIUM
+        HIGH
+        CRITICAL
 
         Formato exacto:
 
@@ -79,6 +84,14 @@ class GeminiAnalysisService:
         )
 
         result = json.loads(clean_response)
+        
+        result["risk_level"] = RiskLevelEnum(
+            result["risk_level"]
+        )
+
+        result["emotion_intensity"] = EmotionIntensityEnum(
+            result["emotion_intensity"]
+        )
         
         result["provider"] = "GEMINI"
         result["model"] = model

@@ -12,6 +12,9 @@ from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
+from app.shared.enums.session_status_enum import (
+    SessionStatusEnum
+)
 
 class TherapySession(Base):
 
@@ -43,7 +46,7 @@ class TherapySession(Base):
     status = Column(
         String(20),
         nullable=False,
-        default="SCHEDULED"
+        default=SessionStatusEnum.SCHEDULED
     )
 
     created_at = Column(

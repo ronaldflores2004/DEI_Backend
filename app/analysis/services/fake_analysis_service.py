@@ -1,10 +1,18 @@
+from app.shared.enums.risk_level_enum import (
+    RiskLevelEnum
+)
+
+from app.shared.enums.emotion_intensity_enum import (
+    EmotionIntensityEnum
+)
+
 def analyze_text_with_fake(text: str):
 
     text_lower = text.lower()
 
     primary_emotion = "Calma"
-    emotion_intensity = "Baja"
-    risk_level = "Bajo"
+    emotion_intensity = EmotionIntensityEnum.LOW
+    risk_level = RiskLevelEnum.LOW
 
     keywords_detected = []
 
@@ -20,7 +28,7 @@ def analyze_text_with_fake(text: str):
 
         primary_emotion = "Tristeza"
 
-        emotion_intensity = "Media"
+        emotion_intensity = EmotionIntensityEnum.MEDIUM
 
         sentiment = "Negativo"
 
@@ -30,9 +38,9 @@ def analyze_text_with_fake(text: str):
 
         primary_emotion = "Ansiedad"
 
-        emotion_intensity = "Alta"
+        emotion_intensity = EmotionIntensityEnum.HIGH
 
-        risk_level = "Medio"
+        risk_level = RiskLevelEnum.MEDIUM
 
         sentiment = "Negativo"
 
@@ -42,6 +50,10 @@ def analyze_text_with_fake(text: str):
 
         primary_emotion = "Miedo"
 
+        emotion_intensity = EmotionIntensityEnum.HIGH
+
+        risk_level = RiskLevelEnum.HIGH
+
         sentiment = "Negativo"
 
         keywords_detected.append("miedo")
@@ -50,9 +62,9 @@ def analyze_text_with_fake(text: str):
 
         primary_emotion = "Estrés"
 
-        emotion_intensity = "Alta"
+        emotion_intensity = EmotionIntensityEnum.HIGH
 
-        risk_level = "Medio"
+        risk_level = RiskLevelEnum.MEDIUM
 
         sentiment = "Negativo"
 

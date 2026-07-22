@@ -2,6 +2,13 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
+from app.shared.enums.emotion_intensity_enum import (
+    EmotionIntensityEnum
+)
+
+from app.shared.enums.risk_level_enum import (
+    RiskLevelEnum
+)
 
 class EmotionalAnalysisResponse(BaseModel):
 
@@ -11,10 +18,10 @@ class EmotionalAnalysisResponse(BaseModel):
 
     primary_emotion: str | None
 
-    emotion_intensity: str | None
+    emotion_intensity: EmotionIntensityEnum | None
 
-    risk_level: str | None
-    
+    risk_level: RiskLevelEnum | None
+
     provider: str
 
     model: str

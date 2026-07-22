@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.shared.enums.risk_level_enum import RiskLevelEnum
 from app.identity.models.professional_profile import (
     ProfessionalProfile
 )
@@ -94,9 +95,9 @@ class ProfessionalDashboardService:
             for analysis in analyses:
 
                 if analysis.risk_level in [
-                    "Medio",
-                    "Alto",
-                    "Crítico"
+                    RiskLevelEnum.MEDIUM,
+                    RiskLevelEnum.HIGH,
+                    RiskLevelEnum.CRITICAL
                 ]:
 
                     patients_with_risk.add(

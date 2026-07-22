@@ -25,107 +25,106 @@ from app.therapy.services.access_policy_service import (
 )
 
 
-def get_professional_dashboard(
-    professional: ProfessionalProfile,
-    db: Session
-):
+class ProfessionalDashboardService:
 
-    # =====================================
-    # PACIENTES ACTIVOS
-    # =====================================
+    @staticmethod
+    def get_dashboard(
+        professional: ProfessionalProfile,
+        db: Session
+    ):
 
-    relations = (
-        PatientProfessionalRepository.get_by_professional(
-            db=db,
-            professional_id=professional.id
-        )
-    )
+        # =====================================
+        # PACIENTES ACTIVOS
+        # =====================================
 
-    patient_ids = []
-
-    for relation in relations:
-
-        if (
-            relation.active
-            and has_active_consent(
-                patient_id=relation.patient_id,
-                professional_id=professional.id,
-                db=db
-            )
-        ):
-
-            patient_ids.append(
-                relation.patient_id
-            )
-
-    active_patients = len(
-        patient_ids
-    )
-
-    # =====================================
-    # SOLICITUDES PENDIENTES
-    # =====================================
-
-    pending_requests = len(
-        LinkRequestRepository.get_pending_by_professional(
-            db=db,
-            professional_id=professional.id
-        )
-    )
-
-    # =====================================
-    # PACIENTES CON RIESGO
-    # =====================================
-
-    patients_with_risk = set()
-
-    total_insights = 0
-
-    for patient_id in patient_ids:
-
-        analyses = (
-            EmotionalAnalysisRepository.get_by_patient(
+        relations = (
+            PatientProfessionalRepository.get_by_professional(
                 db=db,
-                patient_id=patient_id
+                professional_id=professional.id
             )
         )
 
-        for analysis in analyses:
+        patient_ids = []
 
-            if analysis.risk_level in [
-                "Medio",
-                "Alto",
-                "Crítico"
-            ]:
+        for relation in relations:
 
-                patients_with_risk.add(
-                    patient_id
+            if (
+                relation.active
+                and has_active_consent(
+                    patient_id=relation.patient_id,
+                    professional_id=professional.id,
+                    db=db
+                )
+            ):
+
+                patient_ids.append(
+                    relation.patient_id
                 )
 
-        insights = generate_insights(
-            patient_id,
-            db
+        active_patients = len(patient_ids)
+
+        # =====================================
+        # SOLICITUDES PENDIENTES
+        # =====================================
+
+        pending_requests = len(
+            LinkRequestRepository.get_pending_by_professional(
+                db=db,
+                professional_id=professional.id
+            )
         )
 
-        total_insights += len(
-            insights
-        )
+        # =====================================
+        # PACIENTES CON RIESGO
+        # =====================================
 
-    # =====================================
-    # DASHBOARD
-    # =====================================
+        patients_with_risk = set()
 
-    return {
+        total_insights = 0
 
-        "active_patients":
-            active_patients,
+        for patient_id in patient_ids:
 
-        "patients_with_risk":
-            len(patients_with_risk),
+            analyses = (
+                EmotionalAnalysisRepository.get_by_patient(
+                    db=db,
+                    patient_id=patient_id
+                )
+            )
 
-        "pending_link_requests":
-            pending_requests,
+            for analysis in analyses:
 
-        "total_insights":
-            total_insights
-    }
+                if analysis.risk_level in [
+                    "Medio",
+                    "Alto",
+                    "Crítico"
+                ]:
+
+                    patients_with_risk.add(
+                        patient_id
+                    )
+
+            insights = generate_insights(
+                patient_id,
+                db
+            )
+
+            total_insights += len(insights)
+
+        # =====================================
+        # DASHBOARD
+        # =====================================
+
+        return {
+
+            "active_patients":
+                active_patients,
+
+            "patients_with_risk":
+                len(patients_with_risk),
+
+            "pending_link_requests":
+                pending_requests,
+
+            "total_insights":
+                total_insights
+        }

@@ -17,73 +17,76 @@ from app.analysis.services.weekly_summary_service import (
 )
 
 
-def get_patient_dashboard(
-    patient: PatientProfile,
-    db: Session
-):
+class PatientDashboardService:
 
-    # =====================================
-    # RESUMEN SEMANAL
-    # =====================================
+    @staticmethod
+    def get_dashboard(
+        patient: PatientProfile,
+        db: Session
+    ):
 
-    weekly = WeeklySummaryService.get_weekly_summary(
-        patient=patient,
-        db=db
-    )
+        # =====================================
+        # RESUMEN SEMANAL
+        # =====================================
 
-    # =====================================
-    # ÚLTIMA RECOMENDACIÓN
-    # =====================================
-
-    latest_recommendation = (
-        PatientRecommendationRepository.get_latest_by_patient(
-            db=db,
-            patient_id=patient.id
+        weekly = WeeklySummaryService.get_weekly_summary(
+            patient=patient,
+            db=db
         )
-    )
 
-    # =====================================
-    # TOTAL DE ENTRADAS
-    # =====================================
+        # =====================================
+        # ÚLTIMA RECOMENDACIÓN
+        # =====================================
 
-    entries_count = (
-        EmotionalEntryRepository.count_by_patient(
-            db=db,
-            patient_id=patient.id
-        )
-    )
-
-    # =====================================
-    # DASHBOARD
-    # =====================================
-
-    return {
-
-        "entries_count":
-            entries_count,
-
-        "dominant_emotion":
-            weekly["dominant_emotion"],
-
-        "latest_emotion":
-            weekly["latest_emotion"],
-
-        "average_intensity":
-            weekly["average_intensity"],
-
-        "risk_level":
-            weekly["risk_level"],
-
-        "trend":
-            weekly["trend"],
-
-        "ai_summary":
-            weekly["ai_summary"],
-
-        "latest_recommendation":
-            (
-                latest_recommendation.content
-                if latest_recommendation
-                else None
+        latest_recommendation = (
+            PatientRecommendationRepository.get_latest_by_patient(
+                db=db,
+                patient_id=patient.id
             )
-    }
+        )
+
+        # =====================================
+        # TOTAL DE ENTRADAS
+        # =====================================
+
+        entries_count = (
+            EmotionalEntryRepository.count_by_patient(
+                db=db,
+                patient_id=patient.id
+            )
+        )
+
+        # =====================================
+        # DASHBOARD
+        # =====================================
+
+        return {
+
+            "entries_count":
+                entries_count,
+
+            "dominant_emotion":
+                weekly["dominant_emotion"],
+
+            "latest_emotion":
+                weekly["latest_emotion"],
+
+            "average_intensity":
+                weekly["average_intensity"],
+
+            "risk_level":
+                weekly["risk_level"],
+
+            "trend":
+                weekly["trend"],
+
+            "ai_summary":
+                weekly["ai_summary"],
+
+            "latest_recommendation":
+                (
+                    latest_recommendation.content
+                    if latest_recommendation
+                    else None
+                )
+        }

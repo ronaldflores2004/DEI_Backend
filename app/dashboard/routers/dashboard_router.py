@@ -4,9 +4,6 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
-
-from app.identity.models.user import User
 
 from app.dashboard.schemas.patient_dashboard_response import (
     PatientDashboardResponse
@@ -17,23 +14,19 @@ from app.dashboard.schemas.professional_dashboard_response import (
 )
 
 from app.dashboard.services.patient_dashboard_service import (
-    get_patient_dashboard
+    PatientDashboardService
 )
 
 from app.dashboard.services.professional_dashboard_service import (
-    get_professional_dashboard
+    ProfessionalDashboardService
 )
 
 from app.core.dependencies import (
-    get_current_patient_profile
+    get_current_patient_profile, get_current_professional_profile
 )
 
 from app.identity.models.patient_profile import (
     PatientProfile
-)
-
-from app.core.dependencies import (
-    get_current_professional_profile
 )
 
 from app.identity.models.professional_profile import (
@@ -57,7 +50,7 @@ def patient_dashboard(
     )
 ):
 
-    return get_patient_dashboard(
+    return PatientDashboardService.get_dashboard(
         patient=patient,
         db=db
     )
@@ -73,7 +66,7 @@ def professional_dashboard(
     )
 ):
 
-    return get_professional_dashboard(
+    return ProfessionalDashboardService.get_dashboard(
         professional=professional,
         db=db
     )

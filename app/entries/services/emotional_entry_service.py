@@ -67,7 +67,7 @@ class EmotionalEntryService:
                 detail="Este endpoint solo permite entradas de texto."
             )
 
-        if not data.text_content.strip():
+        if not data.text_content or not data.text_content.strip():
             raise HTTPException(
                 status_code=400,
                 detail="El contenido no puede estar vacío."
@@ -163,11 +163,19 @@ class EmotionalEntryService:
             audio_path=file_path
         )
 
-        return EmotionalEntryRepository.create(
-            db=db,
-            entry=entry
-        )
-        
+        try:
+            return EmotionalEntryRepository.create(
+                db=db,
+                entry=entry
+            )
+            
+        except Exception:
+            
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            
+            raise
+
     @staticmethod
     def get_entries(
         patient: PatientProfile,

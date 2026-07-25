@@ -63,12 +63,14 @@ def get_current_user(
         if user_id is None:
             raise credentials_exception
 
-    except JWTError:
+        user_id = int(user_id)
+
+    except (JWTError, ValueError, TypeError):
         raise credentials_exception
 
     user = UserRepository.get_by_id(
         db=db,
-        user_id=int(user_id)
+        user_id=user_id
     )
 
     if user is None:

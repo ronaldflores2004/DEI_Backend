@@ -70,7 +70,12 @@ class PatientService:
         db: Session,
         current_user: User,
     ) -> PatientProfile:
-
+        if current_user.role != RoleEnum.PATIENT:
+            raise HTTPException(
+                status_code=403,
+                detail="Solo pacientes"
+            )
+            
         profile = (
             PatientRepository.get_by_user_id(
                 db=db,

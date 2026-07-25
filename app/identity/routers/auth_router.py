@@ -18,11 +18,10 @@ from app.identity.services.auth_service import (
 )
 
 from app.core.dependencies import (
-    get_current_user,
-    require_role
+    get_current_user
 )
 
-from app.shared.enums.role_enum import RoleEnum
+
 
 router = APIRouter(
     prefix="/auth",
@@ -76,30 +75,4 @@ def get_me(
         "email": current_user.email,
         "role": current_user.role,
         "is_active": current_user.is_active
-    }
-
-
-@router.get("/test-me")
-def test_me(
-    current_user: User = Depends(get_current_user)
-):
-    return current_user.email
-
-
-@router.get("/admin-only")
-def admin_only(
-    current_user: User = Depends(
-        require_role(RoleEnum.ADMIN)
-    )
-):
-    return {
-        "message": "Acceso permitido",
-        "user": current_user.email
-    }
-
-
-@router.get("/public-test")
-def public_test():
-    return {
-        "ok": True
     }

@@ -32,6 +32,15 @@ class Settings:
         "TRANSCRIPTION_PROVIDER",
         "LOCAL"
     )
+    
+    CORS_ORIGINS: list[str] = [
+        origin.strip()
+        for origin in os.getenv(
+            "CORS_ORIGINS",
+            "http://localhost:3000"
+        ).split(",")
+        if origin.strip()
+    ]
 
 
 settings = Settings()
@@ -48,6 +57,16 @@ if not settings.DATABASE_URL:
 if not settings.SECRET_KEY:
     raise RuntimeError(
         "SECRET_KEY no configurada."
+    )
+
+if len(settings.SECRET_KEY) < 32:
+    raise RuntimeError(
+        "SECRET_KEY debe tener al menos 32 caracteres."
+    )
+    
+if settings.ALGORITHM != "HS256":
+    raise RuntimeError(
+        "ALGORITHM no soportado. Use HS256."
     )
 
 # =====================================================

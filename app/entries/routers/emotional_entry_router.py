@@ -61,7 +61,7 @@ def create_entry(
 # Crear entrada de audio
 # =====================================
 
-@router.post("/audio")
+@router.post("/audio", response_model=EmotionalEntryResponse)
 async def create_audio_entry(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),

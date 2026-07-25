@@ -8,6 +8,14 @@ from app.core.logging_config import (
     configure_logging
 )
 
+from app.core.config import (
+    settings
+)
+
+from fastapi.middleware.cors import (
+    CORSMiddleware
+)
+
 # =====================================================
 # Identity
 # =====================================================
@@ -122,6 +130,18 @@ configure_logging()
 app = FastAPI(
     title="DEI API",
     version="1.0.0",
+)
+
+# =====================================================
+# CORS
+# =====================================================
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # =====================================================

@@ -27,6 +27,11 @@ class Settings:
         "AI_FALLBACK_PROVIDER",
         "FAKE"
     )
+    
+    TRANSCRIPTION_PROVIDER: str = os.getenv(
+        "TRANSCRIPTION_PROVIDER",
+        "LOCAL"
+    )
 
 
 settings = Settings()
@@ -57,3 +62,4 @@ ACCESS_TOKEN_EXPIRE_MINUTES = (
 GEMINI_API_KEY = settings.GEMINI_API_KEY
 AI_PROVIDER = settings.AI_PROVIDER
 AI_FALLBACK_PROVIDER = settings.AI_FALLBACK_PROVIDER
+TRANSCRIPTION_PROVIDER = settings.TRANSCRIPTION_PROVIDER

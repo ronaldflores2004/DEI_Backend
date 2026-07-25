@@ -76,3 +76,23 @@ def update(
         db=db,
         current_user=current_user
     )
+    
+# =====================================
+# Generar transcripción automática
+# =====================================
+
+@router.post(
+    "/{entry_id}/auto",
+    response_model=TranscriptionResponse
+)
+def generate_auto_transcription(
+    entry_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    return TranscriptionService.generate_transcription(
+        entry_id=entry_id,
+        db=db,
+        current_user=current_user
+    )

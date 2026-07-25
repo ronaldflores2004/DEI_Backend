@@ -40,6 +40,10 @@ from app.analysis.schemas.emotional_analysis_create import (
     EmotionalAnalysisCreate
 )
 
+from app.shared.exceptions.ai_provider_exception import (
+    AIProviderException
+)
+
 from app.core.config import settings
 
 class EmotionalAnalysisService:
@@ -232,9 +236,7 @@ class EmotionalAnalysisService:
                 text_to_analyze
             )
 
-        except Exception as e:
-
-            print(e)
+        except AIProviderException:
 
             provider = (
                 AnalysisProviderFactory.get_provider(

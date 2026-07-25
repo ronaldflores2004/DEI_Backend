@@ -30,6 +30,10 @@ from app.recommendations.providers.provider_factory import (
     RecommendationProviderFactory
 )
 
+from app.shared.exceptions.ai_provider_exception import (
+    AIProviderException
+)
+
 from app.core.config import settings
 
 
@@ -192,9 +196,7 @@ class PatientRecommendationService:
                 analysis
             )
 
-        except Exception as e:
-
-            print(e)
+        except AIProviderException:
 
             provider = (
                 RecommendationProviderFactory.get_provider(

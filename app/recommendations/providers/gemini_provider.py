@@ -6,6 +6,10 @@ from app.recommendations.providers.base_provider import (
     BaseRecommendationProvider
 )
 
+from app.shared.exceptions.ai_provider_exception import (
+    AIProviderException
+)
+
 
 class GeminiRecommendationProvider(
     BaseRecommendationProvider
@@ -16,6 +20,6 @@ class GeminiRecommendationProvider(
         analysis: EmotionalAnalysis,
     ) -> dict:
 
-        raise NotImplementedError(
+        raise AIProviderException(
             "Gemini Recommendation Provider aún no implementado."
         )

@@ -4,7 +4,9 @@ from fastapi import FastAPI
 # Core
 # =====================================================
 
-
+from app.core.logging_config import (
+    configure_logging
+)
 
 # =====================================================
 # Identity
@@ -114,6 +116,8 @@ from app.administration.routers.administration_router import (
 # =====================================================
 # Aplicación FastAPI
 # =====================================================
+
+configure_logging()
 
 app = FastAPI(
     title="DEI API",

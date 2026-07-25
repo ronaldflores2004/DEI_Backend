@@ -17,6 +17,10 @@ from app.analysis.summary_providers.provider_factory import (
 
 from app.shared.enums.emotion_intensity_enum import EmotionIntensityEnum
 
+from app.shared.exceptions.ai_provider_exception import (
+    AIProviderException
+)
+
 from app.core.config import (
     settings
 )
@@ -208,13 +212,11 @@ class WeeklySummaryService:
                 triggers
             )
 
-        except Exception as e:
-
-            print(e)
+        except AIProviderException:
 
             provider = (
                 SummaryProviderFactory.get_provider(
-                    "FAKE"
+                    settings.AI_FALLBACK_PROVIDER
                 )
             )
 

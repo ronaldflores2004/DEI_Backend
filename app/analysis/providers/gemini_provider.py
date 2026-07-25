@@ -18,11 +18,21 @@ from app.shared.enums.emotion_intensity_enum import (
     EmotionIntensityEnum
 )
 
+import logging
+
+from google.genai import errors
+
+from app.shared.exceptions.ai_provider_exception import (
+    AIProviderException
+)
+
+
 
 client = genai.Client(
     api_key=GEMINI_API_KEY
 )
 
+logger = logging.getLogger(__name__)
 
 class GeminiProvider(
     BaseAnalysisProvider
@@ -130,9 +140,28 @@ class GeminiProvider(
                 model="gemini-2.5-flash"
             )
 
-        except Exception:
+        except errors.APIError as e:
+
+            logger.warning(
+                "Gemini Flash falló durante el análisis emocional: %s",
+                e
+            )
+
+        try:
 
             return self._call_model(
                 text=text,
                 model="gemini-2.5-flash-lite"
             )
+
+        except errors.APIError as e:
+
+            logger.error(
+                "Gemini Flash Lite también falló durante "
+                "el análisis emocional: %s",
+                e
+            )
+
+            raise AIProviderException(
+                "Gemini no pudo realizar el análisis emocional."
+            ) from e

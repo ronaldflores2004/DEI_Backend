@@ -11,6 +11,8 @@ from sqlalchemy import (
 
 from sqlalchemy.orm import relationship
 
+import sqlalchemy as sa
+
 from app.core.database import Base
 
 
@@ -24,6 +26,13 @@ class Consent(Base):
             "ix_consent_patient_professional",
             "patient_id",
             "professional_id"
+        ),
+        Index(
+            "uq_active_consent_patient_professional",
+            "patient_id",
+            "professional_id",
+            unique=True,
+            postgresql_where=sa.text("granted = true")
         ),
 
     )

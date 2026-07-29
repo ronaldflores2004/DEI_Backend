@@ -14,6 +14,8 @@ from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
+import sqlalchemy as sa
+
 
 class PatientProfessional(Base):
 
@@ -30,6 +32,14 @@ class PatientProfessional(Base):
         Index(
             "ix_patient_professional_professional",
             "professional_id"
+        ),
+        
+        Index(
+            "uq_active_patient_professional",
+            "patient_id",
+            "professional_id",
+            unique=True,
+            postgresql_where=sa.text("active = true")
         ),
 
     )

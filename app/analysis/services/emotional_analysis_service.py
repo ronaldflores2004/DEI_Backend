@@ -53,6 +53,31 @@ class EmotionalAnalysisService:
     """
     
     @staticmethod
+    def _get_valid_entry(
+        db: Session,
+        entry_id: int,
+        patient: PatientProfile,
+    ) -> EmotionalEntry:
+
+        entry = EmotionalEntryRepository.get_by_id(
+            db,
+            entry_id,
+        )
+
+        if not entry:
+            raise HTTPException(
+                status_code=404,
+                detail="Entrada no encontrada",
+            )
+
+        EmotionalAnalysisService._validate_entry_owner(
+            entry,
+            patient,
+        )
+
+        return entry
+    
+    @staticmethod
     def _validate_entry_owner(
         entry: EmotionalEntry,
         patient: PatientProfile
@@ -73,20 +98,10 @@ class EmotionalAnalysisService:
         db: Session
     ) -> EmotionalAnalysis:
 
-        entry = EmotionalEntryRepository.get_by_id(
-            db,
-            entry_id
-        )
-
-        if not entry:
-            raise HTTPException(
-                status_code=404,
-                detail="Entrada no encontrada"
-            )
-
-        EmotionalAnalysisService._validate_entry_owner(
-            entry,
-            patient
+        entry = EmotionalAnalysisService._get_valid_entry(
+            db=db,
+            entry_id=entry_id,
+            patient=patient
         )
 
         existing = (
@@ -138,20 +153,10 @@ class EmotionalAnalysisService:
                 detail="Análisis no encontrado"
             )
 
-        entry = EmotionalEntryRepository.get_by_id(
-            db,
-            entry_id
-        )
-
-        if not entry:
-            raise HTTPException(
-                status_code=404,
-                detail="Entrada no encontrada"
-            )
-
-        EmotionalAnalysisService._validate_entry_owner(
-            entry,
-            patient
+        EmotionalAnalysisService._get_valid_entry(
+            db=db,
+            entry_id=entry_id,
+            patient=patient,
         )
 
         return analysis
@@ -164,20 +169,10 @@ class EmotionalAnalysisService:
         db: Session
     ) -> EmotionalAnalysis:
 
-        entry = EmotionalEntryRepository.get_by_id(
-            db,
-            entry_id
-        )
-
-        if not entry:
-            raise HTTPException(
-                status_code=404,
-                detail="Entrada no encontrada"
-            )
-
-        EmotionalAnalysisService._validate_entry_owner(
-            entry,
-            patient
+        entry = EmotionalAnalysisService._get_valid_entry(
+            db=db,
+            entry_id=entry_id,
+            patient=patient,
         )
 
         text_to_analyze = None

@@ -88,14 +88,6 @@ class TherapySessionService:
             status=SessionStatusEnum.SCHEDULED
         )
 
-        session = (
-            TherapySessionRepository.create(
-                db=db,
-                session=session
-            )
-        )
-
-        # Se mantiene aquí hasta el Sprint Notifications
         notification = Notification(
             user_id=patient.user_id,
             title="Nueva sesión programada",
@@ -107,12 +99,29 @@ class TherapySessionService:
             type=NotificationTypeEnum.SESSION
         )
 
-        NotificationRepository.create(
-            db=db,
-            notification=notification
-        )
+        try:
 
-        return session
+            TherapySessionRepository.create_no_commit(
+                db=db,
+                session=session
+            )
+
+            NotificationRepository.create_no_commit(
+                db=db,
+                notification=notification
+            )
+
+            db.commit()
+
+            db.refresh(session)
+
+            return session
+
+        except Exception:
+
+            db.rollback()
+
+            raise
 
     @staticmethod
     def get_sessions(

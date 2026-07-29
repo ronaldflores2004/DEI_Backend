@@ -84,6 +84,17 @@ class NotificationRepository:
         db.refresh(notification)
 
         return notification
+    
+    @staticmethod
+    def create_no_commit(
+        db: Session,
+        notification: Notification,
+    ) -> Notification:
+
+        db.add(notification)
+        db.flush()
+
+        return notification
 
     @staticmethod
     def update(

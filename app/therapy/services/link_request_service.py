@@ -173,11 +173,6 @@ class LinkRequestService:
 
         request.status = LinkRequestStatusEnum.ACCEPTED
 
-        LinkRequestRepository.update(
-            db=db,
-            request=request
-        )
-
         relation = PatientProfessional(
             patient_id=request.patient_id,
             professional_id=request.professional_id,
@@ -185,11 +180,26 @@ class LinkRequestService:
             active=True
         )
 
-        PatientProfessionalRepository.create(
-            db=db,
-            relation=relation
-        )
+        try:
 
-        return {
-            "message": "Solicitud aceptada"
-        }
+            LinkRequestRepository.update_no_commit(
+                db=db,
+                request=request
+            )
+
+            PatientProfessionalRepository.create_no_commit(
+                db=db,
+                relation=relation
+            )
+
+            db.commit()
+
+            return {
+                "message": "Solicitud aceptada"
+            }
+
+        except Exception:
+
+            db.rollback()
+
+            raise

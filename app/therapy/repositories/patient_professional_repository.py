@@ -98,3 +98,14 @@ class PatientProfessionalRepository:
         db.refresh(relation)
 
         return relation
+    
+    @staticmethod
+    def create_no_commit(
+        db: Session,
+        relation: PatientProfessional,
+    ) -> PatientProfessional:
+
+        db.add(relation)
+        db.flush()
+
+        return relation

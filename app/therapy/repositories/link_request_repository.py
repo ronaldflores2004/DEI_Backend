@@ -100,3 +100,13 @@ class LinkRequestRepository:
         db.refresh(request)
 
         return request
+    
+    @staticmethod
+    def update_no_commit(
+        db: Session,
+        request: LinkRequest,
+    ) -> LinkRequest:
+
+        db.flush()
+
+        return request

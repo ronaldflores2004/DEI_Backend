@@ -73,6 +73,17 @@ class TherapySessionRepository:
         db.refresh(session)
 
         return session
+    
+    @staticmethod
+    def create_no_commit(
+        db: Session,
+        session: TherapySession,
+    ) -> TherapySession:
+
+        db.add(session)
+        db.flush()
+
+        return session
 
     @staticmethod
     def update(

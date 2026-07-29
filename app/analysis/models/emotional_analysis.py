@@ -22,11 +22,6 @@ class EmotionalAnalysis(Base):
     __table_args__ = (
 
         Index(
-            "ix_emotional_analysis_entry",
-            "entry_id"
-        ),
-
-        Index(
             "ix_emotional_analysis_risk",
             "risk_level"
         ),
@@ -42,6 +37,7 @@ class EmotionalAnalysis(Base):
     entry_id = Column(
         Integer,
         ForeignKey("emotional_entries.id"),
+        unique=True,
         nullable=False
     )
 

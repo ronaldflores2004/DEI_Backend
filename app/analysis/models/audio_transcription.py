@@ -27,6 +27,7 @@ class AudioTranscription(Base):
     entry_id = Column(
         Integer,
         ForeignKey("emotional_entries.id"),
+        unique=True,
         nullable=False
     )
 

@@ -19,7 +19,7 @@ from app.sessions.models.clinical_note import (
 )
 
 from app.therapy.services.access_policy_service import (
-    has_active_consent
+    AccessPolicyService
 )
 
 
@@ -66,15 +66,11 @@ class ClinicalNoteService:
                 detail="No tienes acceso a esta sesión"
             )
 
-        if not has_active_consent(
+        AccessPolicyService.require_patient_access(
             patient_id=session.patient_id,
             professional_id=professional.id,
             db=db
-        ):
-            raise HTTPException(
-                status_code=403,
-                detail="No existe consentimiento activo"
-            )
+        )
 
         note = ClinicalNote(
             session_id=session.id,
@@ -130,15 +126,11 @@ class ClinicalNoteService:
                 detail="No tienes acceso a esta sesión"
             )
 
-        if not has_active_consent(
+        AccessPolicyService.require_patient_access(
             patient_id=session.patient_id,
             professional_id=professional.id,
             db=db
-        ):
-            raise HTTPException(
-                status_code=403,
-                detail="No existe consentimiento activo"
-            )
+        )
 
         return (
             ClinicalNoteRepository.get_by_session(

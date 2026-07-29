@@ -10,9 +10,6 @@ from app.identity.repositories.patient_repository import (
     PatientRepository
 )
 
-from app.therapy.repositories.patient_professional_repository import (
-    PatientProfessionalRepository
-)
 
 from app.sessions.repositories.therapy_session_repository import (
     TherapySessionRepository
@@ -31,7 +28,7 @@ from app.notifications.repositories.notification_repository import (
 )
 
 from app.therapy.services.access_policy_service import (
-    has_active_consent
+    AccessPolicyService
 )
 
 from app.shared.enums.session_status_enum import (
@@ -78,29 +75,11 @@ class TherapySessionService:
                 detail="Paciente no encontrado"
             )
 
-        relation = (
-            PatientProfessionalRepository.get_active_relation(
-                db=db,
-                patient_id=patient.id,
-                professional_id=professional.id
-            )
-        )
-
-        if not relation:
-            raise HTTPException(
-                status_code=403,
-                detail="No tienes acceso a este paciente"
-            )
-
-        if not has_active_consent(
+        AccessPolicyService.require_patient_access(
             patient_id=patient.id,
             professional_id=professional.id,
             db=db
-        ):
-            raise HTTPException(
-                status_code=403,
-                detail="No existe consentimiento activo"
-            )
+        )
 
         session = TherapySession(
             patient_id=patient.id,

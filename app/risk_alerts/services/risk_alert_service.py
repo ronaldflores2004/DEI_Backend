@@ -11,7 +11,7 @@ from app.therapy.repositories.patient_professional_repository import (
 )
 
 from app.therapy.services.access_policy_service import (
-    has_active_consent
+    AccessPolicyService
 )
 
 from app.shared.enums.risk_level_enum import (
@@ -41,7 +41,7 @@ class RiskAlertService:
 
         for relation in patient_relations:
 
-            if has_active_consent(
+            if AccessPolicyService.has_active_consent(
                 patient_id=relation.patient_id,
                 professional_id=professional_id,
                 db=db

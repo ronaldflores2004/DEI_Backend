@@ -1,5 +1,9 @@
 from pydantic import BaseModel
 
+from app.shared.enums.insight_priority_enum import (
+    InsightPriorityEnum
+)
+
 
 class TherapyInsightResponse(BaseModel):
 
@@ -7,4 +11,5 @@ class TherapyInsightResponse(BaseModel):
 
     content: str
 
-    priority: str
+    priority: InsightPriorityEnum
+    

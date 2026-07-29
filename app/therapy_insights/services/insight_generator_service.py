@@ -6,6 +6,10 @@ from app.analysis.repositories.emotional_analysis_repository import (
     EmotionalAnalysisRepository
 )
 
+from app.shared.enums.insight_priority_enum import (
+    InsightPriorityEnum
+)
+
 
 class TherapyInsightService:
 
@@ -79,7 +83,7 @@ class TherapyInsightService:
                         ),
 
                     "priority":
-                        "HIGH"
+                        InsightPriorityEnum.HIGH
                 })
 
         # =====================================
@@ -138,7 +142,7 @@ class TherapyInsightService:
                         ),
 
                     "priority":
-                        "MEDIUM"
+                        InsightPriorityEnum.MEDIUM
                 })
 
         # =====================================
@@ -168,7 +172,8 @@ class TherapyInsightService:
                         ),
 
                     "priority":
-                        "HIGH"
+                        InsightPriorityEnum.HIGH
                 })
 
         return insights
+    

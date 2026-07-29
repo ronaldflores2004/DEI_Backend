@@ -2,6 +2,10 @@ from sqlalchemy.orm import Session
 
 from app.identity.models.user import User
 
+from app.shared.enums.role_enum import (
+    RoleEnum
+)
+
 
 class UserRepository:
     """
@@ -115,7 +119,7 @@ class UserRepository:
         return (
             db.query(User)
             .filter(
-                User.role == "ADMIN",
+                User.role == RoleEnum.ADMIN,
                 User.is_active.is_(True)
             )
             .count()

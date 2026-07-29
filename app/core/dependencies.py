@@ -85,7 +85,9 @@ def get_current_user(
     return user
 
 
-def require_role(required_role):
+def require_role(
+    required_role : RoleEnum
+):
 
     def role_checker(
         current_user: User = Depends(

@@ -13,6 +13,10 @@ from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
+from app.shared.enums.link_request_status_enum import (
+    LinkRequestStatusEnum
+)
+
 
 class LinkRequest(Base):
 
@@ -50,7 +54,7 @@ class LinkRequest(Base):
     status = Column(
         String(20),
         nullable=False,
-        default="PENDING"
+        default=LinkRequestStatusEnum.PENDING
     )
 
     created_at = Column(

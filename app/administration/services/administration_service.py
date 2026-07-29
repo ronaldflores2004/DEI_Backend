@@ -35,6 +35,10 @@ from app.recommendations.repositories.patient_recommendation_repository import (
 )
 
 
+from app.shared.enums.role_enum import (
+    RoleEnum
+)
+
 # ====================================================
 # Dashboard general del sistema
 # ====================================================
@@ -221,7 +225,7 @@ def deactivate_user(
             detail="El usuario ya está desactivado"
         )
 
-    if user.role == "ADMIN":
+    if user.role == RoleEnum.ADMIN:
 
         active_admins = (
             UserRepository.count_active_admins(

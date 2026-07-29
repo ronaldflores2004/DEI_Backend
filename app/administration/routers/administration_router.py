@@ -9,6 +9,10 @@ from app.core.dependencies import (
     require_role
 )
 
+from app.shared.enums.role_enum import (
+    RoleEnum
+)
+
 from app.identity.models.user import User
 
 from app.identity.schemas.user_response import (
@@ -62,7 +66,7 @@ router = APIRouter(
 def dashboard(
     db: Session = Depends(get_db),
     current_user: User = Depends(
-        require_role("ADMIN")
+        require_role(RoleEnum.ADMIN)
     )
 ):
 
@@ -80,7 +84,7 @@ def dashboard(
 def statistics(
     db: Session = Depends(get_db),
     current_user: User = Depends(
-        require_role("ADMIN")
+        require_role(RoleEnum.ADMIN)
     )
 ):
 
@@ -98,7 +102,7 @@ def statistics(
 def users(
     db: Session = Depends(get_db),
     current_user: User = Depends(
-        require_role("ADMIN")
+        require_role(RoleEnum.ADMIN)
     )
 ):
 
@@ -117,7 +121,7 @@ def activate(
     user_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(
-        require_role("ADMIN")
+        require_role(RoleEnum.ADMIN)
     )
 ):
 
@@ -139,7 +143,7 @@ def deactivate(
     user_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(
-        require_role("ADMIN")
+        require_role(RoleEnum.ADMIN)
     )
 ):
 
@@ -163,7 +167,7 @@ def deactivate(
 def professionals(
     db: Session = Depends(get_db),
     current_user: User = Depends(
-        require_role("ADMIN")
+        require_role(RoleEnum.ADMIN)
     )
 ):
 
@@ -182,7 +186,7 @@ def verify(
     professional_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(
-        require_role("ADMIN")
+        require_role(RoleEnum.ADMIN)
     )
 ):
 

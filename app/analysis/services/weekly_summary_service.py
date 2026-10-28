@@ -17,12 +17,8 @@ from app.analysis.summary_providers.provider_factory import (
 
 from app.shared.enums.emotion_intensity_enum import EmotionIntensityEnum
 
-from app.shared.exceptions.ai_provider_exception import (
-    AIProviderException
-)
-
-from app.core.config import (
-    settings
+from app.shared.ai.provider_chain import (
+    AIProviderChain
 )
 
 NEGATIVE_EMOTIONS = [
@@ -196,37 +192,17 @@ class WeeklySummaryService:
                 )
             )
 
-        try:
-
-            provider = (
-                SummaryProviderFactory.get_provider(
-                    settings.AI_PROVIDER
-                )
-            )
-
-            ai_summary = provider.generate(
+        ai_summary = AIProviderChain.run(
+            task="resumen semanal",
+            get_provider=SummaryProviderFactory.get_provider,
+            call=lambda provider: provider.generate(
                 dominant_emotion,
                 latest_emotion,
                 risk_level,
                 topics,
                 triggers
             )
-
-        except AIProviderException:
-
-            provider = (
-                SummaryProviderFactory.get_provider(
-                    settings.AI_FALLBACK_PROVIDER
-                )
-            )
-
-            ai_summary = provider.generate(
-                dominant_emotion,
-                latest_emotion,
-                risk_level,
-                topics,
-                triggers
-            )
+        )
 
         return {
 

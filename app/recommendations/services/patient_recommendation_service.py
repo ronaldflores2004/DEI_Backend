@@ -30,11 +30,9 @@ from app.recommendations.providers.provider_factory import (
     RecommendationProviderFactory
 )
 
-from app.shared.exceptions.ai_provider_exception import (
-    AIProviderException
+from app.shared.ai.provider_chain import (
+    AIProviderChain
 )
-
-from app.core.config import settings
 
 
 class PatientRecommendationService:
@@ -184,29 +182,13 @@ class PatientRecommendationService:
         # Generar contenido
         # =====================================
 
-        try:
-
-            provider = (
-                RecommendationProviderFactory.get_provider(
-                    settings.AI_PROVIDER
-                )
-            )
-
-            recommendation_data = provider.generate(
+        recommendation_data = AIProviderChain.run(
+            task="recomendación",
+            get_provider=RecommendationProviderFactory.get_provider,
+            call=lambda provider: provider.generate(
                 analysis
             )
-
-        except AIProviderException:
-
-            provider = (
-                RecommendationProviderFactory.get_provider(
-                    settings.AI_FALLBACK_PROVIDER
-                )
-            )
-
-            recommendation_data = provider.generate(
-                analysis
-            )
+        )
 
         recommendation = PatientRecommendation(
             patient_id=patient.id,

@@ -40,11 +40,9 @@ from app.analysis.schemas.emotional_analysis_create import (
     EmotionalAnalysisCreate
 )
 
-from app.shared.exceptions.ai_provider_exception import (
-    AIProviderException
+from app.shared.ai.provider_chain import (
+    AIProviderChain
 )
-
-from app.core.config import settings
 
 class EmotionalAnalysisService:
     """
@@ -219,29 +217,13 @@ class EmotionalAnalysisService:
             )
         )
 
-        try:
-
-            provider = (
-                AnalysisProviderFactory.get_provider(
-                    settings.AI_PROVIDER
-                )
-            )
-            
-            result = provider.analyze(
+        result = AIProviderChain.run(
+            task="análisis emocional",
+            get_provider=AnalysisProviderFactory.get_provider,
+            call=lambda provider: provider.analyze(
                 text_to_analyze
             )
-
-        except AIProviderException:
-
-            provider = (
-                AnalysisProviderFactory.get_provider(
-                    settings.AI_FALLBACK_PROVIDER
-                )
-            )
-
-            result = provider.analyze(
-                text_to_analyze
-            )
+        )
 
         if existing:
             

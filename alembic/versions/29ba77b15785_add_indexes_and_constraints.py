@@ -1,7 +1,7 @@
 """add indexes and constraints
 
 Revision ID: 29ba77b15785
-Revises: 
+Revises: 0f2a6c1d9b3e
 Create Date: 2026-07-10 15:26:37.070240
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '29ba77b15785'
-down_revision: Union[str, Sequence[str], None] = None
+down_revision: Union[str, Sequence[str], None] = '0f2a6c1d9b3e'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

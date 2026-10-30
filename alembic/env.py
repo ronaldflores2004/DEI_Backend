@@ -44,6 +44,8 @@ import app.sessions.models.clinical_note
 import app.notifications.models.notification
 import app.risk_alerts.models.risk_alert
 import app.audit.models.access_audit_log
+import app.administration.models.crisis_line
+import app.administration.models.system_setting
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

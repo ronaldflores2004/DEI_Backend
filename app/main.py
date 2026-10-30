@@ -51,6 +51,9 @@ from app.audit.routers.access_audit_router import (
 from app.identity.routers.patient_data_router import (
     router as patient_data_router,
 )
+from app.administration.routers.admin_settings_router import (
+    router as admin_settings_router,
+)
 from app.shared.security.field_encryption import (
     validate_encryption_config,
 )
@@ -201,6 +204,7 @@ app.include_router(consent_router)
 app.include_router(platform_consent_router)
 app.include_router(access_audit_router)
 app.include_router(patient_data_router)
+app.include_router(admin_settings_router)
 
 # Sin clave de cifrado no se arranca: los diarios
 # nunca deben guardarse en texto plano.

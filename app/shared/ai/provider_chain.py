@@ -3,8 +3,8 @@ import logging
 from collections.abc import Callable
 from typing import TypeVar
 
-from app.core.config import (
-    settings
+from app.shared.ai.runtime_settings import (
+    get_ai_provider_chain
 )
 
 from app.shared.exceptions.ai_provider_exception import (
@@ -36,7 +36,7 @@ class AIProviderChain:
         chain: list[str] | None = None,
     ) -> ResultT:
 
-        chain = chain or settings.AI_PROVIDER_CHAIN
+        chain = chain or get_ai_provider_chain()
 
         last_error: AIProviderException | None = None
 

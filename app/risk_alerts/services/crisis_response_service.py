@@ -88,7 +88,7 @@ class CrisisResponseService:
         )
 
         return {
-            **get_crisis_resources(),
+            **get_crisis_resources(db=db),
             "professional_notified": professional_notified,
         }
 

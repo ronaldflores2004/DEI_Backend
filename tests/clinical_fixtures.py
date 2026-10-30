@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.config import settings
+from app.shared.ai.runtime_settings import clear_cache
 from app.core.database import Base, get_db
 from app.core.dependencies import get_current_user
 from app.main import app
@@ -86,13 +87,36 @@ class ClinicalWorld:
             lambda: self.Session().get(User, self._current_user_id)
         )
 
+        # El ajuste de IA del admin se lee con su propia
+        # sesión: apuntarla a esta base de prueba.
+        monkeypatch.setattr(
+            "app.core.database.SessionLocal",
+            self.Session
+        )
+
         # Sin servicios externos: proveedor simulado.
         monkeypatch.setattr(settings, "AI_PROVIDER_CHAIN", ["FAKE"])
+        clear_cache()
 
         self.client = TestClient(app)
 
     def as_patient(self) -> TestClient:
         self._current_user_id = self.patient_user_id
+        return self.client
+
+    def as_admin(self) -> TestClient:
+
+        db = self.Session()
+
+        if not getattr(self, "admin_user_id", None):
+            admin = User(email="admin@test.com", password_hash="x", role="ADMIN")
+            db.add(admin)
+            db.commit()
+            self.admin_user_id = admin.id
+
+        db.close()
+
+        self._current_user_id = self.admin_user_id
         return self.client
 
     def as_professional(self) -> TestClient:
@@ -160,6 +184,7 @@ class ClinicalWorld:
 
     def close(self) -> None:
         app.dependency_overrides.clear()
+        clear_cache()
         self.engine.dispose()
 
 

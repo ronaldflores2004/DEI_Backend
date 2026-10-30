@@ -10,9 +10,9 @@ import os
 # cambian con el tiempo.
 #
 # El país se elige con CRISIS_COUNTRY (código ISO
-# de dos letras, BO por defecto). Si el país no
-# está en la lista, solo se muestra el mensaje
-# general.
+# de dos letras, BO por defecto). El administrador
+# gestiona las líneas en /admin/crisis-lines; esta
+# lista fija solo se usa si no cargó ninguna.
 
 CRISIS_LINES = {
     # Fuentes: UNICEF Bolivia (Familia Segura) y el
@@ -77,14 +77,53 @@ CRISIS_MESSAGE = (
 )
 
 
-def get_crisis_resources() -> dict:
+def get_crisis_country() -> str:
 
-    country = os.getenv(
+    return os.getenv(
         "CRISIS_COUNTRY",
         "BO"
     ).upper()
 
+
+def get_crisis_resources(
+    db=None
+) -> dict:
+    """
+    Usa las líneas que gestiona el administrador
+    (tabla crisis_lines). Si no hay ninguna activa
+    para el país, usa la lista fija de este archivo.
+    """
+
+    country = get_crisis_country()
+
+    lines = CRISIS_LINES.get(country, [])
+
+    if db is not None:
+
+        from app.administration.repositories.crisis_line_repository import (
+            CrisisLineRepository
+        )
+
+        managed = CrisisLineRepository.get_all(
+            db=db,
+            country_code=country,
+            only_active=True
+        )
+
+        if managed:
+            lines = [
+                {
+                    "name": (
+                        f"{line.name} ({line.city})"
+                        if line.city
+                        else line.name
+                    ),
+                    "phone": line.phone,
+                }
+                for line in managed
+            ]
+
     return {
         "message": CRISIS_MESSAGE,
-        "lines": CRISIS_LINES.get(country, []),
+        "lines": lines,
     }

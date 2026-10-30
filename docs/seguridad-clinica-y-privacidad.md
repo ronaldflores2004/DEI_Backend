@@ -11,8 +11,8 @@ Variables de `.env` nuevas:
 |---|---|---|
 | `DATA_ENCRYPTION_KEYS` | clave Fernet (ver sección 2) | Cifra diarios, audios y notas. **Sin ella la app no arranca.** |
 | `APP_ENV` | `development` o `production` | En `production` la app no arranca si `AI_PROVIDER_CHAIN` incluye `FAKE`. |
-| `CRISIS_COUNTRY` | `BO` (por defecto), `PE`, `MX`, `ES` o `US` | Líneas de crisis que ve el paciente. |
-| `AI_PROVIDER_CHAIN` | `OLLAMA,GEMINI` (por defecto) | Orden de proveedores de IA. `FAKE` solo en desarrollo. |
+| `CRISIS_COUNTRY` | `BO` (por defecto) | País cuyas líneas de crisis ve el paciente. |
+| `AI_PROVIDER_CHAIN` | `OLLAMA,GEMINI` (por defecto) | Orden inicial de proveedores de IA. El admin puede cambiarlo desde el panel (sección 8). `FAKE` solo en desarrollo. |
 
 ## 2. La clave de cifrado
 
@@ -96,10 +96,13 @@ Los datos anteriores al cifrado se siguen leyendo aunque estén en texto plano.
     `RISK_ALERT`, sin el texto de la entrada.
   - Se crea una alerta con estado en la bandeja del psicólogo.
 
-Líneas de Bolivia configuradas: Familia Segura 800 11 30 40 (6:00 a 24:00)
-y WhatsApp 77797667, Policía 110 y Ambulancia en La Paz 165.
-**Confírmalas llamando antes de salir a producción.** Para cambiarlas,
-edita `app/shared/safety/crisis_resources.py`.
+La migración carga las líneas de Bolivia:
+- Familia Segura: 800 11 30 40 (de 6:00 a 24:00) y WhatsApp 77797667.
+- Policía: 110.
+- Ambulancia en La Paz: 165.
+
+**Confírmalas llamando antes de salir a producción.** El administrador
+las gestiona desde el panel (sección 8).
 
 ### Bandeja de alertas del psicólogo
 
@@ -176,24 +179,67 @@ Se conservan, sin datos personales, las sesiones y notas clínicas (son el
 registro del psicólogo), el historial de consentimientos y la auditoría.
 Valida este criterio con un abogado según la Ley de Bolivia.
 
-## 8. Checklist antes de producción
+## 8. Panel del administrador
+
+### Líneas de crisis
+
+| Endpoint | Uso |
+|---|---|
+| `GET /admin/crisis-lines?country_code=BO` | Ver las líneas |
+| `POST /admin/crisis-lines` | Crear: `{"country_code": "BO", "city": "Santa Cruz", "name": "Ambulancia", "phone": "161"}` |
+| `PATCH /admin/crisis-lines/{id}` | Editar o desactivar (`{"is_active": false}`) |
+
+- Una línea sin `city` es nacional.
+- `sort_order` define el orden en que aparecen.
+- El paciente ve las líneas activas del país de `CRISIS_COUNTRY`.
+- Si no hay ninguna activa, se usa la lista fija de
+  `app/shared/safety/crisis_resources.py`.
+
+### Proveedor de IA
+
+| Endpoint | Uso |
+|---|---|
+| `GET /admin/ai-settings` | Ver la cadena actual y si viene del admin o del `.env` |
+| `PUT /admin/ai-settings` | Elegir el orden: `{"provider_chain": ["OLLAMA", "GEMINI"]}` |
+| `DELETE /admin/ai-settings` | Volver a lo que diga el `.env` |
+
+Ejemplos:
+- `["OLLAMA"]`: solo la IA local, sin costo de tokens.
+- `["GEMINI", "OLLAMA"]`: Gemini primero y la IA local de respaldo.
+
+El cambio se aplica en hasta 30 segundos y no hace falta reiniciar el
+backend. Se rechazan los proveedores no implementados, los repetidos y,
+en producción, `FAKE`.
+
+**Agregar otra IA en línea** (por ejemplo, otra API distinta de Gemini):
+1. Implementa su proveedor de análisis, resumen y recomendaciones, igual
+   que los de Gemini.
+2. Regístralo en las tres fábricas (`provider_factory.py`).
+3. Agrega su nombre a `SUPPORTED_PROVIDERS` en
+   `app/shared/ai/runtime_settings.py`.
+
+Desde ese momento el admin ya puede elegirla.
+
+## 9. Checklist antes de producción
 
 - [ ] Clave generada, en el `.env` y con copia fuera del servidor.
 - [ ] `APP_ENV=production` y `AI_PROVIDER_CHAIN` sin `FAKE`.
 - [ ] `alembic upgrade head` aplicado.
-- [ ] Líneas de crisis confirmadas por teléfono.
+- [ ] Líneas de crisis confirmadas por teléfono y cargadas las de otras
+      ciudades (`/admin/crisis-lines`).
 - [ ] Textos de consentimiento revisados por un abogado y un psicólogo.
 - [ ] Si usas Gemini, contratar un plan que no use los datos para
       entrenar y que tenga acuerdo de tratamiento de datos.
 - [ ] El frontend muestra los consentimientos, `crisis_support` y la
       bandeja de alertas.
 
-## 9. Tests
+## 10. Tests
 
 ```bash
 pip install -r requirements-dev.txt
 pytest
 ```
 
-`tests/test_clinical_safety.py` cubre todo lo anterior con una base en
-memoria y el proveedor de IA simulado.
+`tests/test_clinical_safety.py`, `tests/test_admin_settings.py` y
+`tests/test_emotions.py` cubren todo lo anterior. Usan una base en memoria
+y el proveedor de IA simulado.

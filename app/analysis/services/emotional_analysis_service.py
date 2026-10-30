@@ -28,6 +28,10 @@ from app.analysis.repositories.transcription_repository import (
     TranscriptionRepository
 )
 
+from app.shared.safety.risk_phrase_screening import (
+    screen_risk_phrases
+)
+
 from app.analysis.providers.provider_factory import (
     AnalysisProviderFactory
 )
@@ -91,6 +95,29 @@ class EmotionalAnalysisService:
 
 
     @staticmethod
+    def _get_entry_text(
+        db: Session,
+        entry: EmotionalEntry,
+    ) -> str | None:
+
+        if entry.entry_type == EntryTypeEnum.TEXT:
+            return entry.text_content
+
+        if entry.entry_type == EntryTypeEnum.AUDIO:
+
+            transcription = (
+                TranscriptionRepository.get_by_entry(
+                    db,
+                    entry.id
+                )
+            )
+
+            if transcription:
+                return transcription.transcription_text
+
+        return None
+
+    @staticmethod
     def create_analysis(
         entry_id: int,
         patient: PatientProfile,
@@ -121,7 +148,15 @@ class EmotionalAnalysisService:
             entry_id=entry.id,
             primary_emotion=data.primary_emotion,
             emotion_intensity=data.emotion_intensity,
-            risk_level=data.risk_level,
+            # El paciente no fija su riesgo. Solo el filtro
+            # de frases puede asignarlo; si no detecta nada
+            # queda sin evaluar (None) y no se reporta LOW.
+            risk_level=screen_risk_phrases(
+                EmotionalAnalysisService._get_entry_text(
+                    db=db,
+                    entry=entry
+                )
+            ),
             provider="MANUAL",
             model="MANUAL",
             analysis_json=data.analysis_json

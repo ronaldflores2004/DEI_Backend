@@ -24,6 +24,10 @@ from app.therapy.services.access_policy_service import (
 
 
 
+from app.shared.enums.audit_action_enum import (
+    AuditActionEnum
+)
+
 class ClinicalNoteService:
 
     @staticmethod
@@ -69,7 +73,8 @@ class ClinicalNoteService:
         AccessPolicyService.require_patient_access(
             patient_id=session.patient_id,
             professional_id=professional.id,
-            db=db
+            db=db,
+            action=AuditActionEnum.CREATE_CLINICAL_NOTE
         )
 
         note = ClinicalNote(
@@ -129,7 +134,8 @@ class ClinicalNoteService:
         AccessPolicyService.require_patient_access(
             patient_id=session.patient_id,
             professional_id=professional.id,
-            db=db
+            db=db,
+            action=AuditActionEnum.VIEW_CLINICAL_NOTES
         )
 
         return (

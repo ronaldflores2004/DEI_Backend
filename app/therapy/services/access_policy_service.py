@@ -7,6 +7,14 @@ from app.shared.enums.sharing_mode_enum import (
     SharingModeEnum
 )
 
+from app.shared.enums.audit_action_enum import (
+    AuditActionEnum
+)
+
+from app.audit.services.access_audit_service import (
+    AccessAuditService
+)
+
 from app.therapy.repositories.consent_repository import (
     ConsentRepository
 )
@@ -94,10 +102,12 @@ class AccessPolicyService:
         patient_id: int,
         professional_id: int,
         db: Session,
+        action: AuditActionEnum = AuditActionEnum.PATIENT_ACCESS,
     ) -> None:
         """
         Exige una relación terapéutica activa
-        y consentimiento vigente.
+        y consentimiento vigente, y registra
+        el acceso en la auditoría.
         """
 
         if not AccessPolicyService.has_active_relation(
@@ -119,3 +129,10 @@ class AccessPolicyService:
                 status_code=403,
                 detail="No existe consentimiento activo"
             )
+
+        AccessAuditService.log(
+            professional_id=professional_id,
+            patient_ids=[patient_id],
+            action=action,
+            db=db
+        )

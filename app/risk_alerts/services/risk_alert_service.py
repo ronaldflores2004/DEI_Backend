@@ -17,6 +17,14 @@ from app.shared.enums.risk_alert_status_enum import (
     RiskAlertStatusEnum
 )
 
+from app.shared.enums.audit_action_enum import (
+    AuditActionEnum
+)
+
+from app.audit.services.access_audit_service import (
+    AccessAuditService
+)
+
 from app.analysis.repositories.emotional_analysis_repository import (
     EmotionalAnalysisRepository
 )
@@ -181,6 +189,13 @@ class RiskAlertService:
                     )
             })
 
+        AccessAuditService.log(
+            professional_id=professional_id,
+            patient_ids=[alert["patient_id"] for alert in alerts],
+            action=AuditActionEnum.VIEW_RISK_ALERTS,
+            db=db
+        )
+
         return alerts
 
 class RiskAlertTrackingService:
@@ -196,11 +211,20 @@ class RiskAlertTrackingService:
         status: RiskAlertStatusEnum | None = None,
     ) -> list[RiskAlert]:
 
-        return RiskAlertRepository.get_by_professional(
+        alerts = RiskAlertRepository.get_by_professional(
             db=db,
             professional_id=professional_id,
             status=status.value if status else None
         )
+
+        AccessAuditService.log(
+            professional_id=professional_id,
+            patient_ids=[alert.patient_id for alert in alerts],
+            action=AuditActionEnum.VIEW_RISK_ALERTS,
+            db=db
+        )
+
+        return alerts
 
     @staticmethod
     def _get_own_alert(
@@ -242,10 +266,19 @@ class RiskAlertTrackingService:
             alert.status = RiskAlertStatusEnum.SEEN
             alert.seen_at = datetime.utcnow()
 
-        return RiskAlertRepository.update(
+        alert = RiskAlertRepository.update(
             db=db,
             alert=alert
         )
+
+        AccessAuditService.log(
+            professional_id=professional_id,
+            patient_ids=[alert.patient_id],
+            action=AuditActionEnum.REVIEW_RISK_ALERT,
+            db=db
+        )
+
+        return alert
 
     @staticmethod
     def resolve(
@@ -268,7 +301,16 @@ class RiskAlertTrackingService:
         alert.resolved_at = now
         alert.resolution_note = resolution_note
 
-        return RiskAlertRepository.update(
+        alert = RiskAlertRepository.update(
             db=db,
             alert=alert
         )
+
+        AccessAuditService.log(
+            professional_id=professional_id,
+            patient_ids=[alert.patient_id],
+            action=AuditActionEnum.REVIEW_RISK_ALERT,
+            db=db
+        )
+
+        return alert

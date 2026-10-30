@@ -37,7 +37,9 @@ class RiskAlertService:
             )
         )
 
-        allowed_patients = set()
+        # patient_id -> fecha desde la que comparte
+        # (None = todo el historial)
+        allowed_patients = {}
 
         for relation in patient_relations:
 
@@ -46,8 +48,12 @@ class RiskAlertService:
                 professional_id=professional_id,
                 db=db
             ):
-                allowed_patients.add(
-                    relation.patient_id
+                allowed_patients[relation.patient_id] = (
+                    AccessPolicyService.get_shared_since(
+                        patient_id=relation.patient_id,
+                        professional_id=professional_id,
+                        db=db
+                    )
                 )
 
         # =====================================
@@ -56,7 +62,8 @@ class RiskAlertService:
 
         analyses = (
             EmotionalAnalysisRepository.get_with_entries(
-                db
+                db,
+                patient_ids=list(allowed_patients)
             )
         )
 
@@ -90,6 +97,11 @@ class RiskAlertService:
                 continue
 
             if entry.patient_id not in allowed_patients:
+                continue
+
+            shared_since = allowed_patients[entry.patient_id]
+
+            if shared_since and entry.created_at < shared_since:
                 continue
 
             patient_data[

@@ -63,6 +63,12 @@ class PatientProfessional(Base):
         nullable=False
     )
 
+    # Solo se usa con sharing_mode FROM_DATE.
+    share_from = Column(
+        DateTime,
+        nullable=True
+    )
+
     active = Column(
         Boolean,
         default=True

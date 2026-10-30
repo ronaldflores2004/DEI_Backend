@@ -111,6 +111,20 @@ class CrisisResponseService:
             ):
                 continue
 
+            # No avisar de entradas que el paciente
+            # no comparte con este profesional.
+            shared_since = AccessPolicyService.get_shared_since(
+                patient_id=patient.id,
+                professional_id=relation.professional_id,
+                db=db
+            )
+
+            if (
+                shared_since
+                and analysis.entry.created_at < shared_since
+            ):
+                continue
+
             professional = ProfessionalRepository.get_by_id(
                 db,
                 relation.professional_id

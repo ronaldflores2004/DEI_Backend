@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from collections import Counter
 
 from sqlalchemy.orm import Session
@@ -16,7 +18,8 @@ class TherapyInsightService:
     @staticmethod
     def generate_insights(
         patient_id: int,
-        db: Session
+        db: Session,
+        since: datetime | None = None
     ):
 
         # =====================================
@@ -26,7 +29,8 @@ class TherapyInsightService:
         analyses = (
             EmotionalAnalysisRepository.get_by_patient(
                 db=db,
-                patient_id=patient_id
+                patient_id=patient_id,
+                since=since
             )
         )
 

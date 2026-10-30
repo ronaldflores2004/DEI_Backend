@@ -64,5 +64,10 @@ def get_patient_insights(
 
     return TherapyInsightService.generate_insights(
         patient_id=patient_id,
-        db=db
+        db=db,
+        since=AccessPolicyService.get_shared_since(
+            patient_id=patient_id,
+            professional_id=professional.id,
+            db=db
+        )
     )

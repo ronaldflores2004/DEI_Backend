@@ -1,5 +1,11 @@
+from datetime import datetime
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+
+from app.shared.enums.sharing_mode_enum import (
+    SharingModeEnum
+)
 
 from app.therapy.repositories.consent_repository import (
     ConsentRepository
@@ -48,6 +54,40 @@ class AccessPolicyService:
         )
 
         return relation is not None
+
+    @staticmethod
+    def get_shared_since(
+        patient_id: int,
+        professional_id: int,
+        db: Session,
+    ) -> datetime | None:
+        """
+        Fecha desde la que el profesional puede ver
+        entradas del paciente. None significa todo
+        el historial.
+        """
+
+        relation = (
+            PatientProfessionalRepository.get_active_relation(
+                db=db,
+                patient_id=patient_id,
+                professional_id=professional_id,
+            )
+        )
+
+        if not relation:
+            return None
+
+        if relation.sharing_mode == SharingModeEnum.FULL_HISTORY:
+            return None
+
+        if (
+            relation.sharing_mode == SharingModeEnum.FROM_DATE
+            and relation.share_from
+        ):
+            return relation.share_from
+
+        return relation.created_at
 
     @staticmethod
     def require_patient_access(

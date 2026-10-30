@@ -86,9 +86,14 @@ class EmotionalAnalysisRepository:
     def get_by_patient(
         db: Session,
         patient_id: int,
+        since: datetime | None = None,
     ) -> list[EmotionalAnalysis]:
+        """
+        since limita a entradas creadas desde esa
+        fecha (historial compartido con un profesional).
+        """
 
-        return (
+        query = (
             db.query(EmotionalAnalysis)
             .join(
                 EmotionalEntry,
@@ -99,6 +104,15 @@ class EmotionalAnalysisRepository:
                 EmotionalEntry.patient_id == patient_id,
                 EmotionalEntry.is_archived.is_(False)
             )
+        )
+
+        if since:
+            query = query.filter(
+                EmotionalEntry.created_at >= since
+            )
+
+        return (
+            query
             .order_by(
                 EmotionalAnalysis.analyzed_at.desc()
             )
@@ -220,9 +234,10 @@ class EmotionalAnalysisRepository:
     @staticmethod
     def get_with_entries(
         db: Session,
+        patient_ids: list[int] | None = None,
     ) -> list[tuple]:
 
-        return (
+        query = (
             db.query(
                 EmotionalAnalysis,
                 EmotionalEntry
@@ -232,5 +247,11 @@ class EmotionalAnalysisRepository:
                 EmotionalAnalysis.entry_id
                 == EmotionalEntry.id
             )
-            .all()
         )
+
+        if patient_ids is not None:
+            query = query.filter(
+                EmotionalEntry.patient_id.in_(patient_ids)
+            )
+
+        return query.all()

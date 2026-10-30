@@ -12,6 +12,10 @@ class LinkRequestResponse(BaseModel):
 
     status: str
 
+    sharing_mode: str
+
+    share_from: datetime | None
+
     created_at: datetime
 
     class Config:

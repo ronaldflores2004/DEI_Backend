@@ -97,3 +97,33 @@ def screen_risk_phrases(
         return RiskLevelEnum.HIGH
 
     return None
+
+
+RISK_ORDER = [
+    RiskLevelEnum.LOW,
+    RiskLevelEnum.MEDIUM,
+    RiskLevelEnum.HIGH,
+    RiskLevelEnum.CRITICAL,
+]
+
+
+def highest_risk(
+    *levels: RiskLevelEnum | str | None
+) -> RiskLevelEnum | None:
+    """
+    El nivel más alto entre los dados. Se usa para
+    que el filtro de frases nunca quede por debajo
+    de lo que dice la IA, ni la IA por debajo del
+    filtro.
+    """
+
+    valid = [
+        RiskLevelEnum(level)
+        for level in levels
+        if level in [risk.value for risk in RISK_ORDER]
+    ]
+
+    if not valid:
+        return None
+
+    return max(valid, key=RISK_ORDER.index)

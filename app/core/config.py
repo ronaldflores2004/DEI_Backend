@@ -18,14 +18,24 @@ class Settings:
 
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 
+    # development o production. En production no se
+    # permite el proveedor FAKE: inventa resultados,
+    # incluido el nivel de riesgo.
+    APP_ENV: str = os.getenv(
+        "APP_ENV",
+        "development"
+    ).lower()
+
+    # Por defecto, primero la IA local (sin costo
+    # de tokens) y Gemini como respaldo.
     AI_PROVIDER: str = os.getenv(
         "AI_PROVIDER",
-        "GEMINI"
+        "OLLAMA"
     )
 
     AI_FALLBACK_PROVIDER: str = os.getenv(
         "AI_FALLBACK_PROVIDER",
-        "FAKE"
+        "GEMINI"
     )
     
     # Orden en que se prueban los proveedores de IA.
@@ -124,6 +134,15 @@ if len(settings.SECRET_KEY) < 32:
 if settings.ALGORITHM != "HS256":
     raise RuntimeError(
         "ALGORITHM no soportado. Use HS256."
+    )
+
+if (
+    settings.APP_ENV == "production"
+    and "FAKE" in settings.AI_PROVIDER_CHAIN
+):
+    raise RuntimeError(
+        "AI_PROVIDER_CHAIN no puede incluir FAKE en "
+        "producción: inventa análisis y niveles de riesgo."
     )
 
 # =====================================================

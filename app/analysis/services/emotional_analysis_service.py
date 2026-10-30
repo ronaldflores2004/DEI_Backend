@@ -29,6 +29,7 @@ from app.analysis.repositories.transcription_repository import (
 )
 
 from app.shared.safety.risk_phrase_screening import (
+    highest_risk,
     screen_risk_phrases
 )
 
@@ -258,6 +259,14 @@ class EmotionalAnalysisService:
             call=lambda provider: provider.analyze(
                 text_to_analyze
             )
+        )
+
+        # El filtro de frases corre siempre: si la IA
+        # subestima una frase de riesgo, prevalece el
+        # filtro.
+        result["risk_level"] = highest_risk(
+            result.get("risk_level"),
+            screen_risk_phrases(text_to_analyze)
         )
 
         if existing:

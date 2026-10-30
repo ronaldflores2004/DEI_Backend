@@ -1,8 +1,9 @@
 # IA local (Ollama + Whisper)
 
 El backend prueba los proveedores de IA en el orden de `AI_PROVIDER_CHAIN`.
-Con `OLLAMA,GEMINI,FAKE` usa primero la IA local, recurre a Gemini solo si
-la local falla y, como último recurso, al proveedor simulado.
+Con `OLLAMA,GEMINI` (el valor por defecto) usa primero la IA local y recurre
+a Gemini solo si la local falla. `FAKE` (proveedor simulado) sirve solo para
+desarrollo: con `APP_ENV=production` la app no arranca si está en la cadena.
 Así se gastan tokens de Gemini únicamente cuando la laptop con la IA está apagada
 o responde algo inválido.
 

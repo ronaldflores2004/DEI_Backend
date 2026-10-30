@@ -8,6 +8,10 @@ from app.shared.enums.emotion_intensity_enum import (
     EmotionIntensityEnum
 )
 
+from app.shared.emotions import (
+    normalize_emotion
+)
+
 from app.shared.exceptions.ai_provider_exception import (
     AIProviderException
 )
@@ -61,9 +65,9 @@ class AnalysisParser:
 
         try:
 
-            primary_emotion = str(
-                data["primary_emotion"]
-            ).strip()
+            primary_emotion = normalize_emotion(
+                str(data["primary_emotion"])
+            )
 
             emotion_intensity = EmotionIntensityEnum(
                 str(data["emotion_intensity"]).strip().upper()

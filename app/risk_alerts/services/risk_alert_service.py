@@ -17,6 +17,10 @@ from app.shared.enums.risk_alert_status_enum import (
     RiskAlertStatusEnum
 )
 
+from app.shared.emotions import (
+    is_negative
+)
+
 from app.shared.enums.audit_action_enum import (
     AuditActionEnum
 )
@@ -99,12 +103,6 @@ class RiskAlertService:
             RiskLevelEnum.CRITICAL: 4
         }
 
-        negative_emotions = [
-            "Tristeza",
-            "Ansiedad",
-            "Miedo",
-            "Estrés"
-        ]
 
         # =====================================
         # AGRUPAR ANÁLISIS POR PACIENTE
@@ -159,8 +157,7 @@ class RiskAlertService:
             negative_count = sum(
                 1
                 for analysis in analyses_list
-                if analysis.primary_emotion
-                in negative_emotions
+                if is_negative(analysis.primary_emotion)
             )
 
             alerts.append({

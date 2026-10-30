@@ -7,14 +7,21 @@ local y Gemini reciban exactamente las mismas
 instrucciones y devuelvan el mismo formato.
 """
 
+from app.shared.emotions import EMOTIONS
+
 
 def build_analysis_prompt(
     text: str,
 ) -> str:
 
+    emotions = "\n".join(EMOTIONS)
+
     return f"""
-Eres un sistema de análisis emocional para una aplicación
-de apoyo terapéutico llamada DEI.
+Eres un asistente de registro emocional para DEI, una
+aplicación de apoyo a la terapia psicológica. Describes
+lo que el paciente expresa; no diagnosticas ni
+recomiendas tratamientos. La evaluación clínica la hace
+siempre el profesional.
 
 Analiza el texto del paciente.
 
@@ -26,19 +33,31 @@ Reglas obligatorias:
 - Todo el contenido descriptivo debe estar en español.
 - Los valores de los enums deben escribirse EXACTAMENTE como se indican.
 - No traduzcas LOW, MEDIUM, HIGH ni CRITICAL.
+- No inventes: usa solo lo que dice el texto. Si el texto
+  es muy breve o ambiguo, elige la opción más baja que
+  sea coherente con lo escrito.
+- No uses términos diagnósticos (por ejemplo "depresión
+  mayor" o "trastorno").
 
-Usa únicamente estos niveles:
+primary_emotion: una sola de esta lista, escrita igual:
+{emotions}
 
 emotion_intensity:
-LOW
-MEDIUM
-HIGH
+LOW: la emoción se menciona de paso o es leve.
+MEDIUM: la emoción es clara y afecta el día del paciente.
+HIGH: la emoción es intensa, desbordante o domina el texto.
 
-risk_level:
-LOW
-MEDIUM
-HIGH
-CRITICAL
+risk_level (riesgo para la vida o integridad del
+paciente o de otras personas):
+LOW: sin señales de riesgo.
+MEDIUM: malestar intenso, desesperanza, aislamiento o
+consumo problemático, sin ideas de hacerse daño.
+HIGH: ideas de muerte o suicidio, deseo de no vivir,
+autolesiones, o sufrir violencia o abuso.
+CRITICAL: intención o plan de suicidio o de hacer daño,
+acceso a medios (pastillas, armas), despedidas, o
+peligro inmediato.
+Ante la duda entre dos niveles de riesgo, elige el más alto.
 
 Formato exacto:
 

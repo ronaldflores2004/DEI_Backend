@@ -29,21 +29,12 @@ from app.shared.enums.platform_consent_type_enum import (
     PlatformConsentTypeEnum
 )
 
-NEGATIVE_EMOTIONS = [
-    "Ansiedad",
-    "Tristeza",
-    "Miedo",
-    "Estrés",
-    "Soledad",
-    "Frustración",
-    "Preocupación"
-]
+from app.shared.emotions import (
+    is_negative,
+    is_positive,
+    normalize_emotion
+)
 
-POSITIVE_EMOTIONS = [
-    "Calma",
-    "Alegría",
-    "Gratitud"
-]
 
 class WeeklySummaryService:
     """
@@ -121,7 +112,7 @@ class WeeklySummaryService:
             }
 
         emotions = [
-            analysis.primary_emotion
+            normalize_emotion(analysis.primary_emotion)
             for analysis in analyses
             if analysis.primary_emotion
         ]
@@ -167,11 +158,11 @@ class WeeklySummaryService:
 
         trend = "ESTABLE"
 
-        if latest_emotion in NEGATIVE_EMOTIONS:
+        if is_negative(latest_emotion):
 
             trend = "ATENCION"
 
-        elif latest_emotion in POSITIVE_EMOTIONS:
+        elif is_positive(latest_emotion):
 
             trend = "MEJORA"
 

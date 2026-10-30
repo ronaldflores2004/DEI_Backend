@@ -14,6 +14,18 @@ from app.identity.repositories.professional_repository import (
     ProfessionalRepository
 )
 
+from app.risk_alerts.models.risk_alert import (
+    RiskAlert
+)
+
+from app.risk_alerts.repositories.risk_alert_repository import (
+    RiskAlertRepository
+)
+
+from app.shared.enums.risk_alert_status_enum import (
+    RiskAlertStatusEnum
+)
+
 from app.notifications.models.notification import (
     Notification
 )
@@ -135,6 +147,18 @@ class CrisisResponseService:
 
             risk_level = RiskLevelEnum(analysis.risk_level).value
 
+            if not CrisisResponseService._register_alert(
+                analysis=analysis,
+                patient=patient,
+                professional_id=professional.id,
+                risk_level=risk_level,
+                db=db
+            ):
+                # Ya avisado por este análisis con el
+                # mismo nivel: no repetir la notificación.
+                notified = True
+                continue
+
             NotificationRepository.create_no_commit(
                 db=db,
                 notification=Notification(
@@ -168,3 +192,54 @@ class CrisisResponseService:
             return False
 
         return notified
+
+    @staticmethod
+    def _register_alert(
+        analysis: EmotionalAnalysis,
+        patient: PatientProfile,
+        professional_id: int,
+        risk_level: str,
+        db: Session,
+    ) -> bool:
+        """
+        Crea la alerta, o la reabre si un reanálisis
+        sube el nivel. Devuelve True si hay que notificar.
+        """
+
+        alert = (
+            RiskAlertRepository.get_by_analysis_and_professional(
+                db=db,
+                analysis_id=analysis.id,
+                professional_id=professional_id
+            )
+        )
+
+        if not alert:
+
+            RiskAlertRepository.create_no_commit(
+                db=db,
+                alert=RiskAlert(
+                    patient_id=patient.id,
+                    professional_id=professional_id,
+                    analysis_id=analysis.id,
+                    risk_level=risk_level,
+                    status=RiskAlertStatusEnum.NEW
+                )
+            )
+
+            return True
+
+        escalated = (
+            alert.risk_level == RiskLevelEnum.HIGH
+            and risk_level == RiskLevelEnum.CRITICAL
+        )
+
+        if not escalated:
+            return False
+
+        alert.risk_level = risk_level
+        alert.status = RiskAlertStatusEnum.NEW
+        alert.seen_at = None
+        alert.resolved_at = None
+
+        return True

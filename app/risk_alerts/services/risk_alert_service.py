@@ -1,6 +1,21 @@
 from collections import defaultdict
+from datetime import datetime
+
+from fastapi import HTTPException
 
 from sqlalchemy.orm import Session
+
+from app.risk_alerts.models.risk_alert import (
+    RiskAlert
+)
+
+from app.risk_alerts.repositories.risk_alert_repository import (
+    RiskAlertRepository
+)
+
+from app.shared.enums.risk_alert_status_enum import (
+    RiskAlertStatusEnum
+)
 
 from app.analysis.repositories.emotional_analysis_repository import (
     EmotionalAnalysisRepository
@@ -167,3 +182,93 @@ class RiskAlertService:
             })
 
         return alerts
+
+class RiskAlertTrackingService:
+    """
+    Seguimiento de alertas HIGH o CRITICAL:
+    bandeja del profesional, vista y resolución.
+    """
+
+    @staticmethod
+    def get_inbox(
+        professional_id: int,
+        db: Session,
+        status: RiskAlertStatusEnum | None = None,
+    ) -> list[RiskAlert]:
+
+        return RiskAlertRepository.get_by_professional(
+            db=db,
+            professional_id=professional_id,
+            status=status.value if status else None
+        )
+
+    @staticmethod
+    def _get_own_alert(
+        alert_id: int,
+        professional_id: int,
+        db: Session,
+    ) -> RiskAlert:
+
+        alert = RiskAlertRepository.get_by_id(
+            db=db,
+            alert_id=alert_id
+        )
+
+        if (
+            not alert
+            or alert.professional_id != professional_id
+        ):
+            raise HTTPException(
+                status_code=404,
+                detail="Alerta no encontrada"
+            )
+
+        return alert
+
+    @staticmethod
+    def mark_seen(
+        alert_id: int,
+        professional_id: int,
+        db: Session,
+    ) -> RiskAlert:
+
+        alert = RiskAlertTrackingService._get_own_alert(
+            alert_id=alert_id,
+            professional_id=professional_id,
+            db=db
+        )
+
+        if alert.status == RiskAlertStatusEnum.NEW:
+            alert.status = RiskAlertStatusEnum.SEEN
+            alert.seen_at = datetime.utcnow()
+
+        return RiskAlertRepository.update(
+            db=db,
+            alert=alert
+        )
+
+    @staticmethod
+    def resolve(
+        alert_id: int,
+        professional_id: int,
+        resolution_note: str,
+        db: Session,
+    ) -> RiskAlert:
+
+        alert = RiskAlertTrackingService._get_own_alert(
+            alert_id=alert_id,
+            professional_id=professional_id,
+            db=db
+        )
+
+        now = datetime.utcnow()
+
+        alert.status = RiskAlertStatusEnum.RESOLVED
+        alert.seen_at = alert.seen_at or now
+        alert.resolved_at = now
+        alert.resolution_note = resolution_note
+
+        return RiskAlertRepository.update(
+            db=db,
+            alert=alert
+        )

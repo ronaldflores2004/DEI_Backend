@@ -4,13 +4,16 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
-    Text,
     DateTime,
     ForeignKey,
     Index
 )
 
 from sqlalchemy.orm import relationship
+
+from app.shared.security.field_encryption import (
+    EncryptedText
+)
 
 from app.core.database import Base
 
@@ -58,7 +61,7 @@ class PatientRecommendation(Base):
     )
 
     content = Column(
-        Text,
+        EncryptedText,
         nullable=False
     )
 

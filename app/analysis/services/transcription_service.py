@@ -52,6 +52,10 @@ from app.shared.enums.entry_type_enum import (
     EntryTypeEnum
 )
 
+from app.shared.security.field_encryption import (
+    decrypt_bytes
+)
+
 
 class TranscriptionService:
     """
@@ -279,7 +283,9 @@ class TranscriptionService:
             "rb"
         ) as audio_file:
 
-            audio_content = audio_file.read()
+            audio_content = decrypt_bytes(
+                audio_file.read()
+            )
 
         filename = os.path.basename(
             entry.audio_path

@@ -3,13 +3,17 @@ from datetime import datetime
 from sqlalchemy import (
     Column,
     Integer,
-    Text,
     String,
     DateTime,
     ForeignKey
 )
 
 from sqlalchemy.orm import relationship
+
+from app.shared.security.field_encryption import (
+    EncryptedJSON,
+    EncryptedText
+)
 
 from app.core.database import Base
 
@@ -32,7 +36,7 @@ class AudioTranscription(Base):
     )
 
     transcription_text = Column(
-        Text,
+        EncryptedText,
         nullable=False
     )
 

@@ -3,12 +3,16 @@ from datetime import datetime
 from sqlalchemy import (
     Column,
     Integer,
-    Text,
     DateTime,
     ForeignKey
 )
 
 from sqlalchemy.orm import relationship
+
+from app.shared.security.field_encryption import (
+    EncryptedJSON,
+    EncryptedText
+)
 
 from app.core.database import Base
 
@@ -36,7 +40,7 @@ class ClinicalNote(Base):
     )
 
     note = Column(
-        Text,
+        EncryptedText,
         nullable=False
     )
 

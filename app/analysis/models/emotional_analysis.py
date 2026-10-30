@@ -6,11 +6,14 @@ from sqlalchemy import (
     String,
     DateTime,
     ForeignKey,
-    Index,
-    JSON
+    Index
 )
 
 from sqlalchemy.orm import relationship
+
+from app.shared.security.field_encryption import (
+    EncryptedJSON
+)
 
 from app.core.database import Base
 
@@ -67,7 +70,7 @@ class EmotionalAnalysis(Base):
     )
     
     analysis_json = Column(
-        JSON,
+        EncryptedJSON,
         nullable=False
     )
 

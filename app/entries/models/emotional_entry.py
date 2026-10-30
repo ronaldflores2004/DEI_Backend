@@ -4,7 +4,6 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
-    Text,
     Boolean,
     DateTime,
     ForeignKey,
@@ -12,6 +11,11 @@ from sqlalchemy import (
 )
 
 from sqlalchemy.orm import relationship
+
+from app.shared.security.field_encryption import (
+    EncryptedJSON,
+    EncryptedText
+)
 
 from app.core.database import Base
 
@@ -54,7 +58,7 @@ class EmotionalEntry(Base):
     )
 
     text_content = Column(
-        Text,
+        EncryptedText,
         nullable=True
     )
 

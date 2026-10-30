@@ -27,6 +27,10 @@ from app.identity.repositories.professional_repository import (
 
 
 
+from app.shared.enums.audit_action_enum import (
+    AuditActionEnum
+)
+
 router = APIRouter(
     prefix="/therapy-insights",
     tags=["Therapy Insights"]
@@ -59,10 +63,16 @@ def get_patient_insights(
     AccessPolicyService.require_patient_access(
         patient_id=patient_id,
         professional_id=professional.id,
-        db=db
+        db=db,
+        action=AuditActionEnum.VIEW_INSIGHTS
     )
 
     return TherapyInsightService.generate_insights(
         patient_id=patient_id,
-        db=db
+        db=db,
+        since=AccessPolicyService.get_shared_since(
+            patient_id=patient_id,
+            professional_id=professional.id,
+            db=db
+        )
     )

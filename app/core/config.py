@@ -18,19 +18,86 @@ class Settings:
 
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 
+    # development o production. En production no se
+    # permite el proveedor FAKE: inventa resultados,
+    # incluido el nivel de riesgo.
+    APP_ENV: str = os.getenv(
+        "APP_ENV",
+        "development"
+    ).lower()
+
+    # Por defecto, primero la IA local (sin costo
+    # de tokens) y Gemini como respaldo.
     AI_PROVIDER: str = os.getenv(
         "AI_PROVIDER",
-        "GEMINI"
+        "OLLAMA"
     )
 
     AI_FALLBACK_PROVIDER: str = os.getenv(
         "AI_FALLBACK_PROVIDER",
-        "FAKE"
+        "GEMINI"
     )
     
+    # Orden en que se prueban los proveedores de IA.
+    # Ejemplo: OLLAMA,GEMINI,FAKE
+    # Si no se define, se arma con AI_PROVIDER y
+    # AI_FALLBACK_PROVIDER para no romper los .env actuales.
+    AI_PROVIDER_CHAIN: list[str] = [
+        provider.strip().upper()
+        for provider in os.getenv(
+            "AI_PROVIDER_CHAIN",
+            f"{AI_PROVIDER},{AI_FALLBACK_PROVIDER}"
+        ).split(",")
+        if provider.strip()
+    ]
+
+    # =================================================
+    # IA local (Ollama)
+    # =================================================
+
+    OLLAMA_BASE_URL: str = os.getenv(
+        "OLLAMA_BASE_URL",
+        "http://localhost:11434"
+    ).rstrip("/")
+
+    OLLAMA_MODEL: str = os.getenv(
+        "OLLAMA_MODEL",
+        "llama3.1:8b"
+    )
+
+    OLLAMA_TIMEOUT_SECONDS: float = float(
+        os.getenv("OLLAMA_TIMEOUT_SECONDS", "120")
+    )
+
+    # =================================================
+    # Transcripción (Whisper)
+    # =================================================
+
     TRANSCRIPTION_PROVIDER: str = os.getenv(
         "TRANSCRIPTION_PROVIDER",
-        "LOCAL"
+        "WHISPER_API"
+    )
+
+    # Servidor Whisper compatible con la API de OpenAI
+    # (/v1/audio/transcriptions), por ejemplo
+    # faster-whisper-server o speaches en la otra laptop.
+    WHISPER_API_URL: str = os.getenv(
+        "WHISPER_API_URL",
+        "http://localhost:8000"
+    ).rstrip("/")
+
+    WHISPER_MODEL: str = os.getenv(
+        "WHISPER_MODEL",
+        "small"
+    )
+
+    WHISPER_LANGUAGE: str = os.getenv(
+        "WHISPER_LANGUAGE",
+        "es"
+    )
+
+    WHISPER_TIMEOUT_SECONDS: float = float(
+        os.getenv("WHISPER_TIMEOUT_SECONDS", "300")
     )
     
     CORS_ORIGINS: list[str] = [
@@ -67,6 +134,15 @@ if len(settings.SECRET_KEY) < 32:
 if settings.ALGORITHM != "HS256":
     raise RuntimeError(
         "ALGORITHM no soportado. Use HS256."
+    )
+
+if (
+    settings.APP_ENV == "production"
+    and "FAKE" in settings.AI_PROVIDER_CHAIN
+):
+    raise RuntimeError(
+        "AI_PROVIDER_CHAIN no puede incluir FAKE en "
+        "producción: inventa análisis y niveles de riesgo."
     )
 
 # =====================================================

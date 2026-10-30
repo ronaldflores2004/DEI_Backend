@@ -1,6 +1,33 @@
 from collections import defaultdict
+from datetime import datetime
+
+from fastapi import HTTPException
 
 from sqlalchemy.orm import Session
+
+from app.risk_alerts.models.risk_alert import (
+    RiskAlert
+)
+
+from app.risk_alerts.repositories.risk_alert_repository import (
+    RiskAlertRepository
+)
+
+from app.shared.enums.risk_alert_status_enum import (
+    RiskAlertStatusEnum
+)
+
+from app.shared.emotions import (
+    is_negative
+)
+
+from app.shared.enums.audit_action_enum import (
+    AuditActionEnum
+)
+
+from app.audit.services.access_audit_service import (
+    AccessAuditService
+)
 
 from app.analysis.repositories.emotional_analysis_repository import (
     EmotionalAnalysisRepository
@@ -37,7 +64,9 @@ class RiskAlertService:
             )
         )
 
-        allowed_patients = set()
+        # patient_id -> fecha desde la que comparte
+        # (None = todo el historial)
+        allowed_patients = {}
 
         for relation in patient_relations:
 
@@ -46,8 +75,12 @@ class RiskAlertService:
                 professional_id=professional_id,
                 db=db
             ):
-                allowed_patients.add(
-                    relation.patient_id
+                allowed_patients[relation.patient_id] = (
+                    AccessPolicyService.get_shared_since(
+                        patient_id=relation.patient_id,
+                        professional_id=professional_id,
+                        db=db
+                    )
                 )
 
         # =====================================
@@ -56,7 +89,8 @@ class RiskAlertService:
 
         analyses = (
             EmotionalAnalysisRepository.get_with_entries(
-                db
+                db,
+                patient_ids=list(allowed_patients)
             )
         )
 
@@ -69,12 +103,6 @@ class RiskAlertService:
             RiskLevelEnum.CRITICAL: 4
         }
 
-        negative_emotions = [
-            "Tristeza",
-            "Ansiedad",
-            "Miedo",
-            "Estrés"
-        ]
 
         # =====================================
         # AGRUPAR ANÁLISIS POR PACIENTE
@@ -90,6 +118,11 @@ class RiskAlertService:
                 continue
 
             if entry.patient_id not in allowed_patients:
+                continue
+
+            shared_since = allowed_patients[entry.patient_id]
+
+            if shared_since and entry.created_at < shared_since:
                 continue
 
             patient_data[
@@ -124,8 +157,7 @@ class RiskAlertService:
             negative_count = sum(
                 1
                 for analysis in analyses_list
-                if analysis.primary_emotion
-                in negative_emotions
+                if is_negative(analysis.primary_emotion)
             )
 
             alerts.append({
@@ -154,4 +186,128 @@ class RiskAlertService:
                     )
             })
 
+        AccessAuditService.log(
+            professional_id=professional_id,
+            patient_ids=[alert["patient_id"] for alert in alerts],
+            action=AuditActionEnum.VIEW_RISK_ALERTS,
+            db=db
+        )
+
         return alerts
+
+class RiskAlertTrackingService:
+    """
+    Seguimiento de alertas HIGH o CRITICAL:
+    bandeja del profesional, vista y resolución.
+    """
+
+    @staticmethod
+    def get_inbox(
+        professional_id: int,
+        db: Session,
+        status: RiskAlertStatusEnum | None = None,
+    ) -> list[RiskAlert]:
+
+        alerts = RiskAlertRepository.get_by_professional(
+            db=db,
+            professional_id=professional_id,
+            status=status.value if status else None
+        )
+
+        AccessAuditService.log(
+            professional_id=professional_id,
+            patient_ids=[alert.patient_id for alert in alerts],
+            action=AuditActionEnum.VIEW_RISK_ALERTS,
+            db=db
+        )
+
+        return alerts
+
+    @staticmethod
+    def _get_own_alert(
+        alert_id: int,
+        professional_id: int,
+        db: Session,
+    ) -> RiskAlert:
+
+        alert = RiskAlertRepository.get_by_id(
+            db=db,
+            alert_id=alert_id
+        )
+
+        if (
+            not alert
+            or alert.professional_id != professional_id
+        ):
+            raise HTTPException(
+                status_code=404,
+                detail="Alerta no encontrada"
+            )
+
+        return alert
+
+    @staticmethod
+    def mark_seen(
+        alert_id: int,
+        professional_id: int,
+        db: Session,
+    ) -> RiskAlert:
+
+        alert = RiskAlertTrackingService._get_own_alert(
+            alert_id=alert_id,
+            professional_id=professional_id,
+            db=db
+        )
+
+        if alert.status == RiskAlertStatusEnum.NEW:
+            alert.status = RiskAlertStatusEnum.SEEN
+            alert.seen_at = datetime.utcnow()
+
+        alert = RiskAlertRepository.update(
+            db=db,
+            alert=alert
+        )
+
+        AccessAuditService.log(
+            professional_id=professional_id,
+            patient_ids=[alert.patient_id],
+            action=AuditActionEnum.REVIEW_RISK_ALERT,
+            db=db
+        )
+
+        return alert
+
+    @staticmethod
+    def resolve(
+        alert_id: int,
+        professional_id: int,
+        resolution_note: str,
+        db: Session,
+    ) -> RiskAlert:
+
+        alert = RiskAlertTrackingService._get_own_alert(
+            alert_id=alert_id,
+            professional_id=professional_id,
+            db=db
+        )
+
+        now = datetime.utcnow()
+
+        alert.status = RiskAlertStatusEnum.RESOLVED
+        alert.seen_at = alert.seen_at or now
+        alert.resolved_at = now
+        alert.resolution_note = resolution_note
+
+        alert = RiskAlertRepository.update(
+            db=db,
+            alert=alert
+        )
+
+        AccessAuditService.log(
+            professional_id=professional_id,
+            patient_ids=[alert.patient_id],
+            action=AuditActionEnum.REVIEW_RISK_ALERT,
+            db=db
+        )
+
+        return alert

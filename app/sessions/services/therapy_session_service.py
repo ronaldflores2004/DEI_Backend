@@ -40,6 +40,10 @@ from app.shared.enums.notification_type_enum import (
 )
 
 
+from app.shared.enums.audit_action_enum import (
+    AuditActionEnum
+)
+
 class TherapySessionService:
     
     @staticmethod
@@ -78,7 +82,8 @@ class TherapySessionService:
         AccessPolicyService.require_patient_access(
             patient_id=patient.id,
             professional_id=professional.id,
-            db=db
+            db=db,
+            action=AuditActionEnum.CREATE_SESSION
         )
 
         session = TherapySession(

@@ -17,29 +17,24 @@ from app.analysis.summary_providers.provider_factory import (
 
 from app.shared.enums.emotion_intensity_enum import EmotionIntensityEnum
 
-from app.shared.exceptions.ai_provider_exception import (
-    AIProviderException
+from app.shared.ai.provider_chain import (
+    AIProviderChain
 )
 
-from app.core.config import (
-    settings
+from app.platform_consents.services.platform_consent_service import (
+    PlatformConsentService
 )
 
-NEGATIVE_EMOTIONS = [
-    "Ansiedad",
-    "Tristeza",
-    "Miedo",
-    "Estrés",
-    "Soledad",
-    "Frustración",
-    "Preocupación"
-]
+from app.shared.enums.platform_consent_type_enum import (
+    PlatformConsentTypeEnum
+)
 
-POSITIVE_EMOTIONS = [
-    "Calma",
-    "Alegría",
-    "Gratitud"
-]
+from app.shared.emotions import (
+    is_negative,
+    is_positive,
+    normalize_emotion
+)
+
 
 class WeeklySummaryService:
     """
@@ -117,7 +112,7 @@ class WeeklySummaryService:
             }
 
         emotions = [
-            analysis.primary_emotion
+            normalize_emotion(analysis.primary_emotion)
             for analysis in analyses
             if analysis.primary_emotion
         ]
@@ -163,11 +158,11 @@ class WeeklySummaryService:
 
         trend = "ESTABLE"
 
-        if latest_emotion in NEGATIVE_EMOTIONS:
+        if is_negative(latest_emotion):
 
             trend = "ATENCION"
 
-        elif latest_emotion in POSITIVE_EMOTIONS:
+        elif is_positive(latest_emotion):
 
             trend = "MEJORA"
 
@@ -196,36 +191,26 @@ class WeeklySummaryService:
                 )
             )
 
-        try:
+        ai_summary = None
 
-            provider = (
-                SummaryProviderFactory.get_provider(
-                    settings.AI_PROVIDER
+        # Sin consentimiento de IA el resumen se arma
+        # solo con estadísticas, sin enviar nada a la IA.
+        if PlatformConsentService.has_current_consent(
+            patient_id=patient.id,
+            consent_type=PlatformConsentTypeEnum.AI_PROCESSING,
+            db=db
+        ):
+
+            ai_summary = AIProviderChain.run(
+                task="resumen semanal",
+                get_provider=SummaryProviderFactory.get_provider,
+                call=lambda provider: provider.generate(
+                    dominant_emotion,
+                    latest_emotion,
+                    risk_level,
+                    topics,
+                    triggers
                 )
-            )
-
-            ai_summary = provider.generate(
-                dominant_emotion,
-                latest_emotion,
-                risk_level,
-                topics,
-                triggers
-            )
-
-        except AIProviderException:
-
-            provider = (
-                SummaryProviderFactory.get_provider(
-                    settings.AI_FALLBACK_PROVIDER
-                )
-            )
-
-            ai_summary = provider.generate(
-                dominant_emotion,
-                latest_emotion,
-                risk_level,
-                topics,
-                triggers
             )
 
         return {

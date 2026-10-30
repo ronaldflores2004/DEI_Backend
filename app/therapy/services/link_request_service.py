@@ -106,7 +106,9 @@ class LinkRequestService:
         request = LinkRequest(
             patient_id=patient.id,
             professional_id=professional.id,
-            status=LinkRequestStatusEnum.PENDING
+            status=LinkRequestStatusEnum.PENDING,
+            sharing_mode=data.sharing_mode,
+            share_from=data.share_from
         )
 
         return LinkRequestRepository.create(
@@ -176,7 +178,12 @@ class LinkRequestService:
         relation = PatientProfessional(
             patient_id=request.patient_id,
             professional_id=request.professional_id,
-            sharing_mode=SharingModeEnum.FULL_HISTORY,
+            # Se respeta lo que eligió el paciente.
+            sharing_mode=(
+                request.sharing_mode
+                or SharingModeEnum.NEW_ONLY
+            ),
+            share_from=request.share_from,
             active=True
         )
 

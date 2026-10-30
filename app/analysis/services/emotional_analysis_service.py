@@ -28,6 +28,11 @@ from app.analysis.repositories.transcription_repository import (
     TranscriptionRepository
 )
 
+from app.shared.safety.risk_phrase_screening import (
+    highest_risk,
+    screen_risk_phrases
+)
+
 from app.analysis.providers.provider_factory import (
     AnalysisProviderFactory
 )
@@ -40,11 +45,9 @@ from app.analysis.schemas.emotional_analysis_create import (
     EmotionalAnalysisCreate
 )
 
-from app.shared.exceptions.ai_provider_exception import (
-    AIProviderException
+from app.shared.ai.provider_chain import (
+    AIProviderChain
 )
-
-from app.core.config import settings
 
 class EmotionalAnalysisService:
     """
@@ -91,6 +94,29 @@ class EmotionalAnalysisService:
 
 
     @staticmethod
+    def _get_entry_text(
+        db: Session,
+        entry: EmotionalEntry,
+    ) -> str | None:
+
+        if entry.entry_type == EntryTypeEnum.TEXT:
+            return entry.text_content
+
+        if entry.entry_type == EntryTypeEnum.AUDIO:
+
+            transcription = (
+                TranscriptionRepository.get_by_entry(
+                    db,
+                    entry.id
+                )
+            )
+
+            if transcription:
+                return transcription.transcription_text
+
+        return None
+
+    @staticmethod
     def create_analysis(
         entry_id: int,
         patient: PatientProfile,
@@ -121,7 +147,15 @@ class EmotionalAnalysisService:
             entry_id=entry.id,
             primary_emotion=data.primary_emotion,
             emotion_intensity=data.emotion_intensity,
-            risk_level=data.risk_level,
+            # El paciente no fija su riesgo. Solo el filtro
+            # de frases puede asignarlo; si no detecta nada
+            # queda sin evaluar (None) y no se reporta LOW.
+            risk_level=screen_risk_phrases(
+                EmotionalAnalysisService._get_entry_text(
+                    db=db,
+                    entry=entry
+                )
+            ),
             provider="MANUAL",
             model="MANUAL",
             analysis_json=data.analysis_json
@@ -219,29 +253,21 @@ class EmotionalAnalysisService:
             )
         )
 
-        try:
-
-            provider = (
-                AnalysisProviderFactory.get_provider(
-                    settings.AI_PROVIDER
-                )
-            )
-            
-            result = provider.analyze(
+        result = AIProviderChain.run(
+            task="análisis emocional",
+            get_provider=AnalysisProviderFactory.get_provider,
+            call=lambda provider: provider.analyze(
                 text_to_analyze
             )
+        )
 
-        except AIProviderException:
-
-            provider = (
-                AnalysisProviderFactory.get_provider(
-                    settings.AI_FALLBACK_PROVIDER
-                )
-            )
-
-            result = provider.analyze(
-                text_to_analyze
-            )
+        # El filtro de frases corre siempre: si la IA
+        # subestima una frase de riesgo, prevalece el
+        # filtro.
+        result["risk_level"] = highest_risk(
+            result.get("risk_level"),
+            screen_risk_phrases(text_to_analyze)
+        )
 
         if existing:
             

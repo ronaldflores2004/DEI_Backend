@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi import Request
+from fastapi.responses import JSONResponse
 
 # =====================================================
 # Core
@@ -14,6 +16,10 @@ from app.core.config import (
 
 from fastapi.middleware.cors import (
     CORSMiddleware
+)
+
+from app.shared.exceptions.ai_provider_exception import (
+    AIProviderException
 )
 
 # =====================================================
@@ -35,6 +41,21 @@ from app.therapy.routers.link_request_router import (
 )
 from app.therapy.routers.consent_router import (
     router as consent_router,
+)
+from app.platform_consents.routers.platform_consent_router import (
+    router as platform_consent_router,
+)
+from app.audit.routers.access_audit_router import (
+    router as access_audit_router,
+)
+from app.identity.routers.patient_data_router import (
+    router as patient_data_router,
+)
+from app.administration.routers.admin_settings_router import (
+    router as admin_settings_router,
+)
+from app.shared.security.field_encryption import (
+    validate_encryption_config,
 )
 
 # =====================================================
@@ -117,6 +138,14 @@ from app.administration.routers.administration_router import (
 )
 
 # =====================================================
+# Health
+# =====================================================
+
+from app.health.routers.health_router import (
+    router as health_router,
+)
+
+# =====================================================
 # Base de datos
 # =====================================================
 # Las migraciones son administradas por Alembic.
@@ -145,6 +174,24 @@ app.add_middleware(
 )
 
 # =====================================================
+# Errores de IA
+# =====================================================
+# Si ningún proveedor de IA responde, el cliente recibe
+# un 503 claro en lugar de un error 500 genérico.
+
+@app.exception_handler(AIProviderException)
+def ai_provider_exception_handler(
+    request: Request,
+    exc: AIProviderException
+):
+    return JSONResponse(
+        status_code=503,
+        content={
+            "detail": str(exc)
+        }
+    )
+
+# =====================================================
 # Routers
 # =====================================================
 
@@ -154,6 +201,14 @@ app.include_router(professional_router)
 
 app.include_router(link_request_router)
 app.include_router(consent_router)
+app.include_router(platform_consent_router)
+app.include_router(access_audit_router)
+app.include_router(patient_data_router)
+app.include_router(admin_settings_router)
+
+# Sin clave de cifrado no se arranca: los diarios
+# nunca deben guardarse en texto plano.
+validate_encryption_config()
 
 app.include_router(emotional_entry_router)
 
@@ -174,6 +229,8 @@ app.include_router(therapy_insight_router)
 app.include_router(risk_alert_router)
 
 app.include_router(administration_router)
+
+app.include_router(health_router)
 
 # =====================================================
 # Root

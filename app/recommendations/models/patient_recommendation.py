@@ -4,13 +4,20 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
-    Text,
     DateTime,
     ForeignKey,
     Index
 )
 
 from sqlalchemy.orm import relationship
+
+from app.shared.security.field_encryption import (
+    EncryptedText
+)
+
+from app.shared.enums.recommendation_status_enum import (
+    RecommendationStatusEnum
+)
 
 from app.core.database import Base
 
@@ -58,13 +65,32 @@ class PatientRecommendation(Base):
     )
 
     content = Column(
-        Text,
+        EncryptedText,
         nullable=False
     )
 
     source = Column(
         String(50),
         nullable=False
+    )
+
+    # Las recomendaciones de IA esperan la revisión
+    # del profesional antes de llegar al paciente.
+    status = Column(
+        String(20),
+        nullable=False,
+        default=RecommendationStatusEnum.APPROVED
+    )
+
+    reviewed_by_professional_id = Column(
+        Integer,
+        ForeignKey("professional_profiles.id"),
+        nullable=True
+    )
+
+    reviewed_at = Column(
+        DateTime,
+        nullable=True
     )
 
     created_at = Column(

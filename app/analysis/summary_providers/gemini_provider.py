@@ -1,27 +1,26 @@
-from google import genai
+import logging
 
-from app.core.config import (
-    GEMINI_API_KEY
+from google.genai import errors
+
+from app.analysis.prompts import (
+    build_summary_prompt
 )
 
 from app.analysis.summary_providers.base_provider import (
     BaseSummaryProvider
 )
 
-import logging
-
-from google.genai import errors
+from app.shared.ai.gemini_client import (
+    get_gemini_client
+)
 
 from app.shared.exceptions.ai_provider_exception import (
     AIProviderException
 )
 
 
-client = genai.Client(
-    api_key=GEMINI_API_KEY
-)
-
 logger = logging.getLogger(__name__)
+
 
 class GeminiSummaryProvider(
     BaseSummaryProvider
@@ -30,6 +29,11 @@ class GeminiSummaryProvider(
     Proveedor de resúmenes semanales
     usando Gemini.
     """
+
+    MODELS = (
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite",
+    )
 
     def generate(
         self,
@@ -40,64 +44,44 @@ class GeminiSummaryProvider(
         triggers: list,
     ) -> str:
 
-        prompt = f"""
-Genera un resumen breve para un paciente.
+        prompt = build_summary_prompt(
+            dominant_emotion,
+            latest_emotion,
+            risk_level,
+            topics,
+            triggers
+        )
 
-Emoción predominante:
-{dominant_emotion}
+        last_error = None
 
-Última emoción:
-{latest_emotion}
+        for model in self.MODELS:
 
-Nivel de riesgo:
-{risk_level}
+            try:
 
-Temas identificados:
-{topics}
+                response = get_gemini_client().models.generate_content(
+                    model=model,
+                    contents=prompt
+                )
 
-Desencadenantes identificados:
-{triggers}
+                summary = (response.text or "").strip()
 
-Reglas:
-- Lenguaje sencillo.
-- Español.
-- Máximo 2 oraciones.
-- No hagas diagnósticos.
-"""
+                if summary:
+                    return summary
 
-        try:
+                last_error = AIProviderException(
+                    f"{model} devolvió un resumen vacío."
+                )
 
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt
-            )
+            except errors.APIError as e:
 
-            return response.text.strip()
-
-        except errors.APIError as e:
+                last_error = e
 
             logger.warning(
-                "Gemini Flash falló generando el resumen semanal: %s",
-                e
+                "%s falló generando el resumen semanal: %s",
+                model,
+                last_error
             )
 
-        try:
-
-            response = client.models.generate_content(
-                model="gemini-2.5-flash-lite",
-                contents=prompt
-            )
-
-            return response.text.strip()
-
-        except errors.APIError as e:
-
-            logger.error(
-                "Gemini Flash Lite también falló generando "
-                "el resumen semanal: %s",
-                e
-            )
-
-            raise AIProviderException(
-                "Gemini no pudo generar el resumen semanal."
-            ) from e
+        raise AIProviderException(
+            "Gemini no pudo generar el resumen semanal."
+        ) from last_error

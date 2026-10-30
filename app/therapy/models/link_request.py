@@ -17,6 +17,10 @@ from app.shared.enums.link_request_status_enum import (
     LinkRequestStatusEnum
 )
 
+from app.shared.enums.sharing_mode_enum import (
+    SharingModeEnum
+)
+
 
 class LinkRequest(Base):
 
@@ -55,6 +59,19 @@ class LinkRequest(Base):
         String(20),
         nullable=False,
         default=LinkRequestStatusEnum.PENDING
+    )
+
+    # Historial que el paciente elige compartir
+    # con este profesional.
+    sharing_mode = Column(
+        String(50),
+        nullable=False,
+        default=SharingModeEnum.NEW_ONLY
+    )
+
+    share_from = Column(
+        DateTime,
+        nullable=True
     )
 
     created_at = Column(

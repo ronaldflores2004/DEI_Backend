@@ -85,10 +85,17 @@ class ProfessionalDashboardService:
 
         for patient_id in patient_ids:
 
+            shared_since = AccessPolicyService.get_shared_since(
+                patient_id=patient_id,
+                professional_id=professional.id,
+                db=db
+            )
+
             analyses = (
                 EmotionalAnalysisRepository.get_by_patient(
                     db=db,
-                    patient_id=patient_id
+                    patient_id=patient_id,
+                    since=shared_since
                 )
             )
 
@@ -106,7 +113,8 @@ class ProfessionalDashboardService:
 
             insights = TherapyInsightService.generate_insights(
                 patient_id=patient_id,
-                db=db
+                db=db,
+                since=shared_since
             )
 
             total_insights += len(insights)

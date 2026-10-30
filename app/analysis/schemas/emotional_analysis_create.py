@@ -4,11 +4,13 @@ from app.shared.enums.emotion_intensity_enum import (
     EmotionIntensityEnum
 )
 
-from app.shared.enums.risk_level_enum import (
-    RiskLevelEnum
-)
-
 class EmotionalAnalysisCreate(BaseModel):
+    """
+    Análisis manual del paciente.
+
+    No incluye risk_level: el nivel de riesgo
+    lo determina el sistema, nunca el paciente.
+    """
 
     primary_emotion: str = Field(
         min_length=1,
@@ -16,7 +18,5 @@ class EmotionalAnalysisCreate(BaseModel):
     )
 
     emotion_intensity: EmotionIntensityEnum
-
-    risk_level: RiskLevelEnum
 
     analysis_json: dict

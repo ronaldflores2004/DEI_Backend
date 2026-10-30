@@ -1,5 +1,4 @@
 import os
-import shutil
 import uuid
 
 from fastapi import (
@@ -8,6 +7,10 @@ from fastapi import (
 )
 
 from sqlalchemy.orm import Session
+
+from app.shared.security.field_encryption import (
+    encrypt_bytes
+)
 
 from app.identity.models.patient_profile import (
     PatientProfile
@@ -147,14 +150,14 @@ class EmotionalEntryService:
             unique_filename
         )
 
+        # El audio se guarda cifrado en disco.
         with open(
             file_path,
             "wb"
         ) as buffer:
 
-            shutil.copyfileobj(
-                file.file,
-                buffer
+            buffer.write(
+                encrypt_bytes(content)
             )
 
         entry = EmotionalEntry(

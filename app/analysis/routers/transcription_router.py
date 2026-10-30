@@ -26,6 +26,10 @@ from app.analysis.services.transcription_service import (
     TranscriptionService
 )
 
+from app.platform_consents.dependencies import (
+    require_ai_consent
+)
+
 router = APIRouter(
     prefix="/analysis/transcriptions",
     tags=["Audio Transcriptions"]
@@ -83,7 +87,8 @@ def update(
 
 @router.post(
     "/{entry_id}/auto",
-    response_model=TranscriptionResponse
+    response_model=TranscriptionResponse,
+    dependencies=[Depends(require_ai_consent)]
 )
 def generate_auto_transcription(
     entry_id: int,

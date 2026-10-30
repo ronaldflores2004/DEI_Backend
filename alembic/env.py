@@ -24,6 +24,7 @@ import app.identity.models.professional_profile
 import app.therapy.models.patient_professional
 import app.therapy.models.link_request
 import app.therapy.models.consent
+import app.platform_consents.models.platform_consent
 
 # Entries
 import app.entries.models.emotional_entry
@@ -41,6 +42,10 @@ import app.sessions.models.clinical_note
 
 # Notifications
 import app.notifications.models.notification
+import app.risk_alerts.models.risk_alert
+import app.audit.models.access_audit_log
+import app.administration.models.crisis_line
+import app.administration.models.system_setting
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

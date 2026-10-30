@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from collections import Counter
 
 from sqlalchemy.orm import Session
@@ -10,13 +12,19 @@ from app.shared.enums.insight_priority_enum import (
     InsightPriorityEnum
 )
 
+from app.shared.emotions import (
+    is_negative,
+    normalize_emotion
+)
+
 
 class TherapyInsightService:
 
     @staticmethod
     def generate_insights(
         patient_id: int,
-        db: Session
+        db: Session,
+        since: datetime | None = None
     ):
 
         # =====================================
@@ -26,7 +34,8 @@ class TherapyInsightService:
         analyses = (
             EmotionalAnalysisRepository.get_by_patient(
                 db=db,
-                patient_id=patient_id
+                patient_id=patient_id,
+                since=since
             )
         )
 
@@ -39,8 +48,10 @@ class TherapyInsightService:
         # EMOCIONES DOMINANTES
         # =====================================
 
+        # Normalizar para que "TRISTEZA" y "Tristeza"
+        # cuenten como la misma emoción.
         emotions = [
-            analysis.primary_emotion
+            normalize_emotion(analysis.primary_emotion)
             for analysis in analyses
             if analysis.primary_emotion
         ]
@@ -49,26 +60,13 @@ class TherapyInsightService:
             emotions
         )
 
-        negative_emotions = [
-            "Tristeza",
-            "Ansiedad",
-            "Miedo",
-            "Estrés",
-            "Soledad",
-            "Frustración",
-            "Preocupación",
-            "Culpa",
-            "Desesperanza",
-            "Agotamiento"
-        ]
-
         for emotion, count in (
             emotion_counter.most_common(3)
         ):
 
             if (
                 count >= 3
-                and emotion in negative_emotions
+                and is_negative(emotion)
             ):
 
                 insights.append({

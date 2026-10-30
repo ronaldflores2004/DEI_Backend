@@ -41,6 +41,11 @@ from app.risk_alerts.services.crisis_response_service import (
     CrisisResponseService
 )
 
+from app.platform_consents.dependencies import (
+    require_ai_consent,
+    require_informed_consent
+)
+
 router = APIRouter(
     prefix="/analysis",
     tags=["Emotional Analysis"]
@@ -83,7 +88,8 @@ def _with_crisis_support(
 
 @router.post(
     "/entries/{entry_id}",
-    response_model=EmotionalAnalysisResponse
+    response_model=EmotionalAnalysisResponse,
+    dependencies=[Depends(require_informed_consent)]
 )
 def create_analysis(
     entry_id: int,
@@ -137,7 +143,8 @@ def get_analysis(
 
 @router.post(
     "/entries/{entry_id}/auto",
-    response_model=EmotionalAnalysisResponse
+    response_model=EmotionalAnalysisResponse,
+    dependencies=[Depends(require_ai_consent)]
 )
 def auto_analyze(
     entry_id: int,
@@ -165,7 +172,8 @@ def auto_analyze(
 
 @router.post(
     "/entries/{entry_id}/reanalyze",
-    response_model=EmotionalAnalysisResponse
+    response_model=EmotionalAnalysisResponse,
+    dependencies=[Depends(require_ai_consent)]
 )
 def reanalyze(
     entry_id: int,

@@ -26,6 +26,10 @@ from app.recommendations.services.patient_recommendation_service import (
 )
 
 
+from app.platform_consents.dependencies import (
+    require_ai_consent
+)
+
 router = APIRouter(
     prefix="/recommendations",
     tags=["Patient Recommendations"]
@@ -84,7 +88,8 @@ def list_my(
 
 @router.post(
     "/generate/{analysis_id}",
-    response_model=PatientRecommendationResponse
+    response_model=PatientRecommendationResponse,
+    dependencies=[Depends(require_ai_consent)]
 )
 def generate(
     analysis_id: int,

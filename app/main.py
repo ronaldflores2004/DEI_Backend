@@ -36,6 +36,9 @@ from app.therapy.routers.link_request_router import (
 from app.therapy.routers.consent_router import (
     router as consent_router,
 )
+from app.platform_consents.routers.platform_consent_router import (
+    router as platform_consent_router,
+)
 
 # =====================================================
 # Entries
@@ -154,6 +157,7 @@ app.include_router(professional_router)
 
 app.include_router(link_request_router)
 app.include_router(consent_router)
+app.include_router(platform_consent_router)
 
 app.include_router(emotional_entry_router)
 

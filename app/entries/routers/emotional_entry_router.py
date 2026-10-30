@@ -27,6 +27,10 @@ from app.entries.services.emotional_entry_service import (
     EmotionalEntryService
 )
 
+from app.platform_consents.dependencies import (
+    require_informed_consent
+)
+
 
 
 router = APIRouter(
@@ -41,7 +45,8 @@ router = APIRouter(
 
 @router.post(
     "",
-    response_model=EmotionalEntryResponse
+    response_model=EmotionalEntryResponse,
+    dependencies=[Depends(require_informed_consent)]
 )
 def create_entry(
     entry: EmotionalEntryCreate,
@@ -61,7 +66,11 @@ def create_entry(
 # Crear entrada de audio
 # =====================================
 
-@router.post("/audio", response_model=EmotionalEntryResponse)
+@router.post(
+    "/audio",
+    response_model=EmotionalEntryResponse,
+    dependencies=[Depends(require_informed_consent)]
+)
 async def create_audio_entry(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),

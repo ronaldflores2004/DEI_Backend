@@ -24,6 +24,7 @@ import app.identity.models.professional_profile
 import app.therapy.models.patient_professional
 import app.therapy.models.link_request
 import app.therapy.models.consent
+import app.platform_consents.models.platform_consent
 
 # Entries
 import app.entries.models.emotional_entry

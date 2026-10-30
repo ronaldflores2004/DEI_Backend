@@ -10,10 +10,36 @@ import os
 # cambian con el tiempo.
 #
 # El país se elige con CRISIS_COUNTRY (código ISO
-# de dos letras). Si no está configurado o no
-# existe, solo se muestra el mensaje general.
+# de dos letras, BO por defecto). Si el país no
+# está en la lista, solo se muestra el mensaje
+# general.
 
 CRISIS_LINES = {
+    # Fuentes: UNICEF Bolivia (Familia Segura) y el
+    # aviso de viaje de Canadá (policía y ambulancia),
+    # consultados en octubre de 2026.
+    "BO": [
+        {
+            "name": (
+                "Familia Segura, línea gratuita y "
+                "confidencial (todos los días, de 6:00 "
+                "a 24:00)"
+            ),
+            "phone": "800 11 30 40"
+        },
+        {
+            "name": "Familia Segura por WhatsApp",
+            "phone": "77797667"
+        },
+        {
+            "name": "Policía (emergencias)",
+            "phone": "110"
+        },
+        {
+            "name": "Ambulancia en La Paz",
+            "phone": "165"
+        },
+    ],
     "PE": [
         {
             "name": "Línea 113 Salud (opción 5, salud mental)",
@@ -55,7 +81,7 @@ def get_crisis_resources() -> dict:
 
     country = os.getenv(
         "CRISIS_COUNTRY",
-        ""
+        "BO"
     ).upper()
 
     return {

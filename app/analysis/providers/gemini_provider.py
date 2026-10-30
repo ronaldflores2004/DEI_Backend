@@ -1,38 +1,30 @@
-import json
+import logging
 
-from google import genai
+from google.genai import errors
 
-from app.core.config import (
-    GEMINI_API_KEY
+from app.analysis.prompts import (
+    build_analysis_prompt
+)
+
+from app.analysis.providers.analysis_parser import (
+    AnalysisParser
 )
 
 from app.analysis.providers.base_provider import (
     BaseAnalysisProvider
 )
 
-from app.shared.enums.risk_level_enum import (
-    RiskLevelEnum
+from app.shared.ai.gemini_client import (
+    get_gemini_client
 )
-
-from app.shared.enums.emotion_intensity_enum import (
-    EmotionIntensityEnum
-)
-
-import logging
-
-from google.genai import errors
 
 from app.shared.exceptions.ai_provider_exception import (
     AIProviderException
 )
 
 
-
-client = genai.Client(
-    api_key=GEMINI_API_KEY
-)
-
 logger = logging.getLogger(__name__)
+
 
 class GeminiProvider(
     BaseAnalysisProvider
@@ -42,126 +34,61 @@ class GeminiProvider(
     utilizando Gemini.
     """
 
+    MODELS = (
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite",
+    )
+
     @staticmethod
     def _call_model(
         text: str,
         model: str
     ) -> dict:
 
-        prompt = f"""
-        Eres un sistema de análisis emocional para una aplicación
-        de apoyo terapéutico llamada DEI.
+        try:
 
-        Analiza el texto del paciente.
+            response = get_gemini_client().models.generate_content(
+                model=model,
+                contents=build_analysis_prompt(text)
+            )
 
-        Reglas obligatorias:
+        except errors.APIError as e:
 
-        - Responde solamente JSON válido.
-        - No uses markdown.
-        - No uses ```json.
-        - Todo el contenido descriptivo debe estar en español.
-        - Los valores de los enums deben escribirse EXACTAMENTE como se indican.
-        - No traduzcas LOW, MEDIUM, HIGH ni CRITICAL.
+            raise AIProviderException(
+                f"{model} falló: {e}"
+            ) from e
 
-        Usa únicamente estos niveles:
-
-        emotion_intensity:
-        LOW
-        MEDIUM
-        HIGH
-
-        risk_level:
-        LOW
-        MEDIUM
-        HIGH
-        CRITICAL
-
-        Formato exacto:
-
-        {{
-            "primary_emotion": "",
-            "emotion_intensity": "",
-            "risk_level": "",
-            "analysis_json": {{
-                "provider": "GEMINI",
-                "model": "{model}",
-                "sentiment": "",
-                "topics": [],
-                "triggers": []
-            }}
-        }}
-
-        Texto del paciente:
-
-        {text}
-        """
-
-        response = client.models.generate_content(
-            model=model,
-            contents=prompt
+        return AnalysisParser.from_text(
+            raw=response.text,
+            provider="GEMINI",
+            model=model
         )
-
-        clean_response = (
-            response.text
-            .replace("```json", "")
-            .replace("```", "")
-            .strip()
-        )
-
-        result = json.loads(
-            clean_response
-        )
-
-        result["risk_level"] = RiskLevelEnum(
-            result["risk_level"]
-        )
-
-        result["emotion_intensity"] = EmotionIntensityEnum(
-            result["emotion_intensity"]
-        )
-
-        result["provider"] = "GEMINI"
-        result["model"] = model
-
-        result["analysis_json"]["provider"] = "GEMINI"
-        result["analysis_json"]["model"] = model
-
-        return result
 
     def analyze(
         self,
         text: str
     ) -> dict:
 
-        try:
+        last_error = None
 
-            return self._call_model(
-                text=text,
-                model="gemini-2.5-flash"
-            )
+        for model in self.MODELS:
 
-        except errors.APIError as e:
+            try:
 
-            logger.warning(
-                "Gemini Flash falló durante el análisis emocional: %s",
-                e
-            )
+                return self._call_model(
+                    text=text,
+                    model=model
+                )
 
-        try:
+            except AIProviderException as e:
 
-            return self._call_model(
-                text=text,
-                model="gemini-2.5-flash-lite"
-            )
+                logger.warning(
+                    "Gemini falló durante el análisis emocional: %s",
+                    e
+                )
 
-        except errors.APIError as e:
+                last_error = e
 
-            logger.error(
-                "Gemini Flash Lite también falló durante "
-                "el análisis emocional: %s",
-                e
-            )
-
-            raise AIProviderException(
-                "Gemini no pudo realizar el análisis emocional."
-            ) from e
+        raise AIProviderException(
+            "Gemini no pudo realizar el análisis emocional."
+        ) from last_error

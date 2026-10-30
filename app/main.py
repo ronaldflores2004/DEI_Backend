@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi import Request
+from fastapi.responses import JSONResponse
 
 # =====================================================
 # Core
@@ -14,6 +16,10 @@ from app.core.config import (
 
 from fastapi.middleware.cors import (
     CORSMiddleware
+)
+
+from app.shared.exceptions.ai_provider_exception import (
+    AIProviderException
 )
 
 # =====================================================
@@ -129,6 +135,14 @@ from app.administration.routers.administration_router import (
 )
 
 # =====================================================
+# Health
+# =====================================================
+
+from app.health.routers.health_router import (
+    router as health_router,
+)
+
+# =====================================================
 # Base de datos
 # =====================================================
 # Las migraciones son administradas por Alembic.
@@ -155,6 +169,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# =====================================================
+# Errores de IA
+# =====================================================
+# Si ningún proveedor de IA responde, el cliente recibe
+# un 503 claro en lugar de un error 500 genérico.
+
+@app.exception_handler(AIProviderException)
+def ai_provider_exception_handler(
+    request: Request,
+    exc: AIProviderException
+):
+    return JSONResponse(
+        status_code=503,
+        content={
+            "detail": str(exc)
+        }
+    )
 
 # =====================================================
 # Routers
@@ -193,6 +225,8 @@ app.include_router(therapy_insight_router)
 app.include_router(risk_alert_router)
 
 app.include_router(administration_router)
+
+app.include_router(health_router)
 
 # =====================================================
 # Root

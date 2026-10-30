@@ -4,6 +4,10 @@ from app.recommendations.models.patient_recommendation import (
     PatientRecommendation,
 )
 
+from app.shared.enums.recommendation_status_enum import (
+    RecommendationStatusEnum
+)
+
 
 class PatientRecommendationRepository:
     """
@@ -45,13 +49,19 @@ class PatientRecommendationRepository:
     def get_by_patient(
         db: Session,
         patient_id: int,
+        status: str = RecommendationStatusEnum.APPROVED,
     ) -> list[PatientRecommendation]:
+        """
+        Por defecto solo las aprobadas: el paciente
+        nunca ve una recomendación sin revisar.
+        """
 
         return (
             db.query(PatientRecommendation)
             .filter(
                 PatientRecommendation.patient_id
-                == patient_id
+                == patient_id,
+                PatientRecommendation.status == status
             )
             .order_by(
                 PatientRecommendation.created_at.desc()
@@ -69,13 +79,45 @@ class PatientRecommendationRepository:
             db.query(PatientRecommendation)
             .filter(
                 PatientRecommendation.patient_id
-                == patient_id
+                == patient_id,
+                PatientRecommendation.status
+                == RecommendationStatusEnum.APPROVED
             )
             .order_by(
                 PatientRecommendation.created_at.desc()
             )
             .first()
         )
+
+    @staticmethod
+    def get_pending_by_patients(
+        db: Session,
+        patient_ids: list[int],
+    ) -> list[PatientRecommendation]:
+
+        return (
+            db.query(PatientRecommendation)
+            .filter(
+                PatientRecommendation.patient_id.in_(patient_ids),
+                PatientRecommendation.status
+                == RecommendationStatusEnum.PENDING_REVIEW
+            )
+            .order_by(
+                PatientRecommendation.created_at
+            )
+            .all()
+        )
+
+    @staticmethod
+    def update(
+        db: Session,
+        recommendation: PatientRecommendation,
+    ) -> PatientRecommendation:
+
+        db.commit()
+        db.refresh(recommendation)
+
+        return recommendation
 
     @staticmethod
     def create(

@@ -21,6 +21,14 @@ from app.shared.ai.provider_chain import (
     AIProviderChain
 )
 
+from app.platform_consents.services.platform_consent_service import (
+    PlatformConsentService
+)
+
+from app.shared.enums.platform_consent_type_enum import (
+    PlatformConsentTypeEnum
+)
+
 NEGATIVE_EMOTIONS = [
     "Ansiedad",
     "Tristeza",
@@ -192,17 +200,27 @@ class WeeklySummaryService:
                 )
             )
 
-        ai_summary = AIProviderChain.run(
-            task="resumen semanal",
-            get_provider=SummaryProviderFactory.get_provider,
-            call=lambda provider: provider.generate(
-                dominant_emotion,
-                latest_emotion,
-                risk_level,
-                topics,
-                triggers
+        ai_summary = None
+
+        # Sin consentimiento de IA el resumen se arma
+        # solo con estadísticas, sin enviar nada a la IA.
+        if PlatformConsentService.has_current_consent(
+            patient_id=patient.id,
+            consent_type=PlatformConsentTypeEnum.AI_PROCESSING,
+            db=db
+        ):
+
+            ai_summary = AIProviderChain.run(
+                task="resumen semanal",
+                get_provider=SummaryProviderFactory.get_provider,
+                call=lambda provider: provider.generate(
+                    dominant_emotion,
+                    latest_emotion,
+                    risk_level,
+                    topics,
+                    triggers
+                )
             )
-        )
 
         return {
 

@@ -42,6 +42,9 @@ from app.platform_consents.routers.platform_consent_router import (
 from app.audit.routers.access_audit_router import (
     router as access_audit_router,
 )
+from app.identity.routers.patient_data_router import (
+    router as patient_data_router,
+)
 
 # =====================================================
 # Entries
@@ -162,6 +165,7 @@ app.include_router(link_request_router)
 app.include_router(consent_router)
 app.include_router(platform_consent_router)
 app.include_router(access_audit_router)
+app.include_router(patient_data_router)
 
 app.include_router(emotional_entry_router)
 

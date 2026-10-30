@@ -6,6 +6,10 @@ from app.analysis.transcription_providers.local_provider import (
     LocalTranscriptionProvider
 )
 
+from app.analysis.transcription_providers.whisper_api_provider import (
+    WhisperApiTranscriptionProvider
+)
+
 
 class TranscriptionProviderFactory:
     """
@@ -19,6 +23,9 @@ class TranscriptionProviderFactory:
     ) -> BaseTranscriptionProvider:
 
         provider = provider.upper()
+
+        if provider == "WHISPER_API":
+            return WhisperApiTranscriptionProvider()
 
         if provider == "LOCAL":
             return LocalTranscriptionProvider()

@@ -96,5 +96,6 @@ class AuthService:
                 "sub": str(user.id),
                 "email": user.email,
                 "role": user.role,
+                "ver": user.token_version or 0,
             }
         )

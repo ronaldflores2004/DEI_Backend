@@ -19,6 +19,17 @@ class User(Base):
 
     is_active = Column(Boolean, default=True)
 
+    # Versión de las sesiones. Va dentro del JWT ("ver");
+    # al subirla (por ejemplo, al restablecer la
+    # contraseña) todos los tokens anteriores dejan de
+    # ser válidos.
+    token_version = Column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default="0"
+    )
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
     updated_at = Column(

@@ -100,6 +100,57 @@ class Settings:
         os.getenv("WHISPER_TIMEOUT_SECONDS", "300")
     )
     
+    # =================================================
+    # Recuperación de contraseña
+    # =================================================
+
+    # Minutos de validez del código enviado por correo.
+    PASSWORD_RESET_CODE_TTL_MINUTES: int = int(
+        os.getenv("PASSWORD_RESET_CODE_TTL_MINUTES", "15")
+    )
+
+    # Intentos fallidos permitidos por código. Al
+    # superarlos el código queda anulado.
+    PASSWORD_RESET_MAX_ATTEMPTS: int = int(
+        os.getenv("PASSWORD_RESET_MAX_ATTEMPTS", "5")
+    )
+
+    # Códigos que se envían como máximo por cuenta y hora.
+    PASSWORD_RESET_MAX_REQUESTS_PER_HOUR: int = int(
+        os.getenv("PASSWORD_RESET_MAX_REQUESTS_PER_HOUR", "3")
+    )
+
+    # =================================================
+    # Correo saliente (SMTP)
+    # =================================================
+    # Sin SMTP_HOST, en development el correo se escribe
+    # en el log (para probar) y en production no se envía.
+
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "")
+
+    SMTP_PORT: int = int(
+        os.getenv("SMTP_PORT", "587")
+    )
+
+    SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "")
+
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+
+    SMTP_FROM: str = os.getenv(
+        "SMTP_FROM",
+        "DEI <no-reply@dei.local>"
+    )
+
+    # STARTTLS (puerto 587), SSL (puerto 465) o NONE.
+    SMTP_SECURITY: str = os.getenv(
+        "SMTP_SECURITY",
+        "STARTTLS"
+    ).upper()
+
+    SMTP_TIMEOUT_SECONDS: float = float(
+        os.getenv("SMTP_TIMEOUT_SECONDS", "15")
+    )
+
     CORS_ORIGINS: list[str] = [
         origin.strip()
         for origin in os.getenv(
@@ -143,6 +194,11 @@ if (
     raise RuntimeError(
         "AI_PROVIDER_CHAIN no puede incluir FAKE en "
         "producción: inventa análisis y niveles de riesgo."
+    )
+
+if settings.SMTP_SECURITY not in ("STARTTLS", "SSL", "NONE"):
+    raise RuntimeError(
+        "SMTP_SECURITY debe ser STARTTLS, SSL o NONE."
     )
 
 # =====================================================

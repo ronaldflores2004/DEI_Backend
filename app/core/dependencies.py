@@ -65,6 +65,10 @@ def get_current_user(
 
         user_id = int(user_id)
 
+        # Los tokens emitidos antes de esta versión no
+        # llevan "ver": cuentan como versión 0.
+        token_version = int(payload.get("ver", 0))
+
     except (JWTError, ValueError, TypeError):
         raise credentials_exception
 
@@ -74,6 +78,10 @@ def get_current_user(
     )
 
     if user is None:
+        raise credentials_exception
+
+    # Sesión cerrada por un cambio de contraseña.
+    if token_version != (user.token_version or 0):
         raise credentials_exception
 
     if not user.is_active:

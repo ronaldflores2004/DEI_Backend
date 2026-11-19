@@ -19,6 +19,7 @@ from app.core.database import Base
 import app.identity.models.user
 import app.identity.models.patient_profile
 import app.identity.models.professional_profile
+import app.identity.models.password_reset_code
 
 # Therapy
 import app.therapy.models.patient_professional

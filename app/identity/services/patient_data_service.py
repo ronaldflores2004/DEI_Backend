@@ -325,6 +325,8 @@ class PatientDataService:
             user.email = f"eliminado-{user.id}@dei.invalid"
             user.password_hash = secrets.token_hex(32)
             user.is_active = False
+            # Cierra todas las sesiones abiertas.
+            user.token_version = (user.token_version or 0) + 1
 
             db.commit()
 

@@ -1,0 +1,29 @@
+@startuml 13-ia-secuencia-analisis
+title dei_ai - POST /analysis
+skinparam shadowing false
+autonumber
+participant Cliente
+participant AnalysisRouter as r
+participant AnalysisService as s
+participant ProviderFactory as f
+participant OllamaAnalysisProvider as p
+participant OllamaClient as c
+participant "Ollama :11434" as o
+participant AnalysisPipeline as pipe
+
+Cliente -> r : {"text": "..."}
+r -> s : analyze
+s -> f : create(settings.AI_PROVIDER)
+f --> s : OllamaAnalysisProvider
+s -> p : analyze(text)
+p -> p : PromptLoader.load(system.txt)
+p -> c : chat(system, "Texto del paciente: ...")
+c -> o : POST /api/chat (stream=false)
+o --> c : message.content
+c --> p : texto crudo
+p -> pipe : process(raw, OLLAMA, model)
+pipe -> pipe : parsear JSON, validar campos,\nnormalizar emoción/intensidad/riesgo
+pipe --> p : dict
+p --> r : AnalysisResponse
+r --> Cliente : 200 {primary_emotion, emotion_intensity,\nrisk_level, provider, model, analysis_json}
+@enduml

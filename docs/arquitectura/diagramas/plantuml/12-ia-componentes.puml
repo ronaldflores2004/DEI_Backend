@@ -1,0 +1,74 @@
+@startuml 12-ia-componentes
+title dei_ai - Clases del servicio de IA local
+left to right direction
+skinparam shadowing false
+
+class AnalysisRouter <<APIRouter /analysis>>
+class TranscriptionRouter <<APIRouter /transcription>>
+class AnalysisService {
+  +analyze(AnalysisRequest) : dict
+}
+class TranscriptionService {
+  +transcribe(TranscriptionRequest)
+}
+class ProviderFactory {
+  +create(name)
+}
+class PROVIDER_REGISTRY <<dict>> {
+  OLLAMA
+  FASTER_WHISPER
+}
+abstract class BaseAnalysisProvider {
+  +analyze(text) : dict
+}
+abstract class BaseTranscriptionProvider {
+  +transcribe(path) : dict
+}
+abstract class BaseSummaryProvider {
+  +summarize(entries)
+}
+abstract class BaseRecommendationsProvider
+abstract class BaseInsightsProvider
+class OllamaAnalysisProvider
+class FasterWhisperProvider
+class OllamaClient {
+  +chat(system, user) : str
+}
+class WhisperClient {
+  -_model : WhisperModel
+  +transcribe(path) : dict
+}
+class AnalysisPipeline {
+  +process(raw, provider, model)
+}
+class TranscriptionPipeline {
+  +execute(raw)
+}
+class JsonResponseParser
+class AnalysisValidator
+class EmotionNormalizer
+class IntensityNormalizer
+class RiskLevelNormalizer
+class PromptLoader {
+  prompts/analysis/system.txt
+}
+
+AnalysisRouter --> AnalysisService
+TranscriptionRouter --> TranscriptionService
+AnalysisService --> ProviderFactory
+TranscriptionService --> ProviderFactory
+TranscriptionService --> TranscriptionPipeline
+ProviderFactory --> PROVIDER_REGISTRY
+OllamaAnalysisProvider --|> BaseAnalysisProvider
+FasterWhisperProvider --|> BaseTranscriptionProvider
+OllamaAnalysisProvider --> OllamaClient
+OllamaAnalysisProvider --> PromptLoader
+OllamaAnalysisProvider --> AnalysisPipeline
+FasterWhisperProvider --> WhisperClient
+AnalysisPipeline --> JsonResponseParser
+AnalysisPipeline --> AnalysisValidator
+AnalysisPipeline --> EmotionNormalizer
+AnalysisPipeline --> IntensityNormalizer
+AnalysisPipeline --> RiskLevelNormalizer
+note bottom of BaseSummaryProvider : contratos sin implementación\n(archivos ollama_*_provider.py vacíos)
+@enduml

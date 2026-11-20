@@ -1,0 +1,44 @@
+@startuml 29-diseno-paquetes
+title Diseño - Paquetes del backend y dependencias
+skinparam shadowing false
+package core
+package shared
+package identity
+package therapy
+package platform_consents
+package entries
+package analysis
+package recommendations
+package risk_alerts
+package sessions
+package notifications
+package audit
+package dashboard
+package therapy_insights
+package administration
+package health
+identity ..> core
+therapy ..> identity
+therapy ..> audit
+entries ..> platform_consents
+entries ..> identity
+analysis ..> entries
+analysis ..> shared
+analysis ..> risk_alerts
+analysis ..> platform_consents
+recommendations ..> analysis
+recommendations ..> therapy
+recommendations ..> notifications
+risk_alerts ..> therapy
+risk_alerts ..> notifications
+risk_alerts ..> audit
+sessions ..> therapy
+sessions ..> audit
+dashboard ..> analysis
+dashboard ..> therapy
+therapy_insights ..> analysis
+administration ..> shared
+administration ..> identity
+health ..> shared
+shared ..> core
+@enduml

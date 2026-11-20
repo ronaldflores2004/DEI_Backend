@@ -1,0 +1,24 @@
+@startuml 27-estados-dominio
+title Diseño - Estados de las entidades del dominio
+skinparam shadowing false
+state "Solicitud de vínculo" as LR {
+  [*] --> PENDING
+  PENDING --> ACCEPTED : psicólogo acepta
+  PENDING --> REJECTED : psicólogo rechaza
+}
+state "Sesión de terapia" as TS {
+  [*] --> SCHEDULED
+  SCHEDULED --> COMPLETED : completar
+  SCHEDULED --> CANCELLED : cancelar
+}
+state "Recomendación" as RC {
+  [*] --> PENDING_REVIEW : con psicólogo
+  [*] --> APPROVED : sin psicólogo
+  PENDING_REVIEW --> APPROVED : aprobar (puede editar)
+  PENDING_REVIEW --> REJECTED : rechazar
+}
+state "Consentimiento" as CS {
+  [*] --> Vigente : otorgar
+  Vigente --> Revocado : revocar
+}
+@enduml

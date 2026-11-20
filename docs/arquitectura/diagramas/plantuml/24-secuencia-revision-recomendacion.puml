@@ -1,0 +1,34 @@
+@startuml 24-secuencia-revision-recomendacion
+title CU10/CU23 - Generar y revisar recomendaciones de IA
+skinparam shadowing false
+autonumber
+actor Paciente
+participant "App paciente" as ap
+participant "recommendation_router" as r
+participant "PatientRecommendationService" as s
+participant "AIProviderChain" as ch
+database PostgreSQL as db
+participant "App psicólogo" as aps
+actor "Psicólogo" as Psi
+Paciente -> ap : pedir recomendación
+ap -> r : POST /recommendations/generate/{analysis_id}
+r -> s : generate_from_analysis
+alt riesgo HIGH/CRITICAL y sin psicólogo
+  r --> ap : 409 "busca apoyo profesional"
+end
+s -> ch : run("recomendación")
+ch --> s : {title, content, source}
+alt tiene psicólogo vinculado
+  s -> db : PatientRecommendation(PENDING_REVIEW)
+  ap --> Paciente : "en revisión"
+else
+  s -> db : PatientRecommendation(APPROVED)
+end
+Psi -> aps : Revisar
+aps -> r : GET /recommendations/review/pending
+Psi -> aps : aprueba (puede editar) o rechaza
+aps -> r : PATCH /recommendations/review/{id}/approve | reject
+r -> s : review()
+s -> db : status, reviewed_by, reviewed_at + auditoría
+s -> db : Notification(RECOMMENDATION) al paciente
+@enduml

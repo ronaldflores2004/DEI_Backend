@@ -1,0 +1,9 @@
+@startuml 08-estados-alerta
+title DEI - Estados de una alerta de riesgo (RiskAlert)
+skinparam shadowing false
+[*] --> NEW : análisis HIGH/CRITICAL\ncon vínculo y consentimiento
+NEW --> SEEN : PATCH /seen
+NEW --> RESOLVED : PATCH /resolve (nota)
+SEEN --> RESOLVED : PATCH /resolve (nota)
+RESOLVED --> [*]
+@enduml

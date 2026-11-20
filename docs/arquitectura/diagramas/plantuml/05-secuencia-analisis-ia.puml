@@ -1,0 +1,54 @@
+@startuml 05-secuencia-analisis-ia
+title DEI - Análisis emocional automático con IA
+skinparam shadowing false
+autonumber
+
+actor Paciente
+participant "App Flutter" as app
+participant "emotional_analysis_router\nPOST /analysis/entries/{id}/auto" as router
+participant "require_ai_consent" as consent
+participant "EmotionalAnalysisService" as svc
+participant "AIProviderChain" as chain
+participant "OllamaAnalysisProvider" as ollama
+participant "GeminiAnalysisProvider" as gemini
+participant "risk_phrase_screening" as screen
+participant "CrisisResponseService" as crisis
+database PostgreSQL as db
+
+Paciente -> app : "Analizar con IA"
+app -> router : POST + Bearer JWT
+router -> consent : ¿consentimiento AI_PROCESSING vigente?
+alt sin consentimiento
+  consent --> app : 403
+end
+router -> svc : create_analysis_from_entry(entry_id, patient)
+svc -> db : leer entrada (+ transcripción si es audio)\ndescifrar texto
+svc -> chain : run("análisis emocional")
+loop por cada proveedor de la cadena (admin o .env)
+  chain -> ollama : analyze(texto)
+  alt Ollama responde JSON válido
+    ollama --> chain : {primary_emotion, intensity, risk_level, analysis_json}
+  else timeout / error / JSON inválido
+    ollama --> chain : AIProviderException
+    chain -> gemini : analyze(texto)
+    gemini --> chain : resultado
+  end
+end
+alt ningún proveedor responde
+  chain --> app : 503 "Ningún proveedor de IA pudo completar..."
+end
+chain --> svc : resultado
+svc -> screen : screen_risk_phrases(texto)
+screen --> svc : nivel determinista o None
+svc -> svc : risk_level = max(IA, filtro)
+svc -> db : guardar EmotionalAnalysis\n(analysis_json cifrado)
+router -> crisis : handle(analysis, patient)
+alt riesgo HIGH o CRITICAL
+  crisis -> db : RiskAlert + Notification por profesional\ncon vínculo y consentimiento
+  crisis --> router : líneas de crisis + professional_notified
+else
+  crisis --> router : None
+end
+router --> app : EmotionalAnalysisResponse (+ crisis_support)
+app --> Paciente : emoción, intensidad, riesgo\n(+ tarjeta de ayuda con botón "Llamar")
+@enduml

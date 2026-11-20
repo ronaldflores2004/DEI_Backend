@@ -1,0 +1,37 @@
+@startuml 01-despliegue
+title DEI - Diagrama de despliegue
+skinparam shadowing false
+
+node "Dispositivo del usuario" as dev {
+  artifact "App DEI (Flutter)\nAndroid / iOS / Web" as app
+}
+
+node "ThinkPad (servidor de aplicación)" as tp {
+  node "Uvicorn :8000" {
+    component "dei_backend\n(FastAPI)" as be
+  }
+  folder "uploads/ (audios)" as up
+  database "PostgreSQL\n(esquema Alembic)" as db
+}
+
+node "Nitro 5 (GPU, red local)" as nitro {
+  component "Ollama :11434\nllama3.1:8b" as ollama
+  component "Servidor Whisper :8000\n(API compatible OpenAI)" as whisper
+  component "dei_ai (FastAPI) :8001\nanálisis + Faster-Whisper" as deiai
+}
+
+cloud "Google Cloud" {
+  component "Gemini API" as gemini
+}
+cloud "Proveedor SMTP" as smtp
+
+app --> be : HTTPS/JSON + JWT
+be --> db : SQL
+be --> up : guarda audio
+be --> ollama : HTTP /api/chat\n(1ª opción)
+be --> gemini : google-genai\n(respaldo)
+be --> whisper : HTTP /v1/audio/transcriptions
+be --> smtp : SMTP
+deiai --> ollama : HTTP /api/chat
+be ..> deiai : <<planificado>>\nintegración pendiente
+@enduml

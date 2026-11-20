@@ -1,0 +1,45 @@
+@startuml 26-actividad-diario
+title Actividad - Registrar una entrada del diario y analizarla
+skinparam shadowing false
+|Paciente|
+start
+:Abrir "Nueva entrada";
+if (¿Texto o voz?) then (texto)
+  :Escribir texto;
+else (voz)
+  :Grabar audio;
+endif
+|Sistema|
+if (¿Consentimiento informado vigente?) then (no)
+  :Pedir consentimiento;
+  stop
+else (sí)
+endif
+:Guardar entrada cifrada;
+if (¿Es audio?) then (sí)
+  :Transcribir con Whisper;
+endif
+if (¿Consentimiento de IA?) then (no)
+  :Mostrar entrada sin análisis;
+  stop
+else (sí)
+endif
+:Analizar con la cadena de IA;
+if (¿Algún proveedor respondió?) then (no)
+  :Avisar "IA no disponible"\n(la entrada queda guardada);
+  stop
+else (sí)
+endif
+:Aplicar filtro de frases de riesgo;
+:Guardar análisis cifrado;
+if (¿Riesgo HIGH o CRITICAL?) then (sí)
+  fork
+    :Mostrar líneas de crisis;
+  fork again
+    :Crear alerta y notificar\na psicólogos autorizados;
+  end fork
+endif
+|Paciente|
+:Ver emoción, intensidad y riesgo;
+stop
+@enduml

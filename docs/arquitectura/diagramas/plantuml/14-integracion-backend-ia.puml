@@ -1,0 +1,28 @@
+@startuml 14-integracion-backend-ia
+title Integración backend <-> IA local: hoy y propuesta
+skinparam shadowing false
+
+package "Hoy" {
+  [dei_backend] as b1
+  [Ollama] as o1
+  [Whisper API] as w1
+  [Gemini] as g1
+  [dei_ai] as a1
+  b1 --> o1 : prompts propios del backend
+  b1 --> w1
+  b1 --> g1 : respaldo
+  a1 --> o1 : prompt propio de dei_ai
+}
+
+package "Propuesta" {
+  [dei_backend] as b2
+  [dei_ai\n(único punto de IA local)] as a2
+  [Ollama] as o2
+  [Faster-Whisper] as w2
+  [Gemini] as g2
+  b2 --> a2 : DeiAiProvider (HTTP + token de servicio)\n/analysis, /transcription (multipart),\n/summaries, /recommendations
+  a2 --> o2
+  a2 --> w2
+  b2 --> g2 : respaldo en AIProviderChain
+}
+@enduml

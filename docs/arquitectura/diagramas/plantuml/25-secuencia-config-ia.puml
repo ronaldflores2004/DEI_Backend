@@ -1,0 +1,24 @@
+@startuml 25-secuencia-config-ia
+title CU32 - Configurar la cadena de proveedores de IA
+skinparam shadowing false
+autonumber
+actor Administrador
+participant "App (admin/settings)" as app
+participant "admin_settings_router" as r
+participant "AdminSettingsService" as s
+participant "runtime_settings" as rt
+database PostgreSQL as db
+app -> r : GET /admin/ai-settings
+r --> app : cadena actual, proveedores soportados, origen (.env o admin)
+Administrador -> app : reordena (arrastrar): OLLAMA, GEMINI
+app -> r : PUT /admin/ai-settings {chain}
+r -> s : update
+s -> rt : validate_chain()
+alt vacía / repetidos / desconocido / FAKE en producción
+  r --> app : 400
+end
+s -> db : SystemSetting(AI_PROVIDER_CHAIN)
+s -> rt : clear_cache()
+r --> app : 200
+note over rt : Las tareas de IA leen la cadena\n(caché de 30 s). DELETE vuelve al .env.
+@enduml

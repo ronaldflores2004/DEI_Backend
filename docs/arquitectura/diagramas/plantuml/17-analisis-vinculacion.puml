@@ -1,0 +1,30 @@
+@startuml 17-analisis-vinculacion
+title Análisis - Clases de análisis: CU11/CU20 Vincular paciente y psicólogo
+skinparam shadowing false
+left to right direction
+actor Paciente
+actor "Psicólogo" as Psi
+boundary "Pantalla\nMi psicólogo" as B1
+boundary "Pantalla\nPacientes" as B2
+control "Gestor de\nvínculos" as C1
+control "Política\nde acceso" as C2
+control "Auditoría" as C3
+entity "Solicitud\nde vínculo" as E1
+entity "Relación\nterapéutica" as E2
+entity "Consentimiento\npor psicólogo" as E3
+entity "Perfil\nprofesional" as E4
+entity "Registro\nde acceso" as E5
+Paciente -- B1
+Psi -- B2
+B1 -- C1
+B2 -- C1
+C1 -- E1
+C1 -- E2
+C1 -- E4
+B2 -- C2
+C2 -- E2
+C2 -- E3
+C2 -- C3
+C3 -- E5
+B1 -- E3
+@enduml

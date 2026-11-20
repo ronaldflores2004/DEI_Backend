@@ -1,0 +1,32 @@
+@startuml 23-secuencia-vinculacion
+title CU11/CU20 - Solicitar y aceptar vínculo paciente-psicólogo
+skinparam shadowing false
+autonumber
+actor Paciente
+participant "App paciente" as ap
+participant "App psicólogo" as aps
+actor "Psicólogo" as Psi
+participant "link_request_router" as r
+participant "LinkRequestService" as s
+participant "consent_router" as cr
+database PostgreSQL as db
+ap -> r : GET /professionals/directory
+r --> ap : psicólogos verificados
+Paciente -> ap : elige psicólogo y qué compartir\n(FULL_HISTORY / FROM_DATE / NEW_ONLY)
+ap -> r : POST /therapy/link-requests
+r -> s : create_link_request
+alt no verificado / solicitud pendiente / relación activa
+  r --> ap : 400 o 404
+end
+s -> db : LinkRequest(PENDING)
+Psi -> aps : abre "Pacientes"
+aps -> r : GET /therapy/link-requests/pending
+Psi -> aps : Aceptar
+aps -> r : PATCH /therapy/link-requests/{id}/accept
+r -> s : accept_request
+s -> db : LinkRequest(ACCEPTED) + PatientProfessional(activo, modo, desde)
+Paciente -> ap : da acceso
+ap -> cr : POST /therapy/consents
+cr -> db : Consent(granted)
+note over aps : El psicólogo ve solo entradas\npermitidas por modo y consentimiento;\ncada consulta se audita.
+@enduml

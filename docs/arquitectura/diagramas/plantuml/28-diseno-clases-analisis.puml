@@ -1,0 +1,83 @@
+@startuml 28-diseno-clases-analisis
+title Diseño - Clases del módulo de análisis (backend)
+skinparam shadowing false
+hide empty members
+package "analysis" {
+  class EmotionalAnalysisRouter <<APIRouter>> {
+    +create_analysis(entry_id, data)
+    +get_analysis(entry_id)
+    +auto_analyze(entry_id)
+    +reanalyze(entry_id)
+    +weekly_summary()
+  }
+  class EmotionalAnalysisService {
+    +create_analysis(entry_id, patient, data, db)
+    +get_analysis(entry_id, patient, db)
+    +create_analysis_from_entry(entry_id, patient, db)
+    -_get_valid_entry()
+    -_get_entry_text()
+  }
+  class EmotionalAnalysisRepository {
+    +get_by_entry(db, entry_id)
+    +create(db, analysis)
+    +update(db, analysis)
+    +get_with_entries(db, patient_ids)
+  }
+  class EmotionalAnalysis <<entity>> {
+    id : int
+    entry_id : int
+    primary_emotion : str
+    emotion_intensity : str
+    risk_level : str
+    provider : str
+    model : str
+    analysis_json : EncryptedJSON
+    analyzed_at : datetime
+  }
+  class AnalysisProviderFactory {
+    +get_provider(name) : BaseAnalysisProvider
+  }
+  abstract class BaseAnalysisProvider {
+    +analyze(text) : dict
+  }
+  class OllamaAnalysisProvider
+  class GeminiAnalysisProvider
+  class FakeAnalysisProvider
+  class AnalysisParser {
+    +parse(raw) : dict
+  }
+}
+package "shared" {
+  class AIProviderChain {
+    +run(task, get_provider, call, chain)
+  }
+  class RiskPhraseScreening <<module>> {
+    +screen_risk_phrases(text)
+    +highest_risk(a, b)
+  }
+  class OllamaClient
+  class GeminiClient
+}
+package "risk_alerts" {
+  class CrisisResponseService {
+    +handle(analysis, patient, db) : dict
+    -_notify_professionals()
+    -_register_alert()
+  }
+}
+EmotionalAnalysisRouter --> EmotionalAnalysisService
+EmotionalAnalysisRouter --> CrisisResponseService
+EmotionalAnalysisService --> EmotionalAnalysisRepository
+EmotionalAnalysisService --> AIProviderChain
+EmotionalAnalysisService --> RiskPhraseScreening
+EmotionalAnalysisService ..> AnalysisProviderFactory
+EmotionalAnalysisRepository --> EmotionalAnalysis
+AnalysisProviderFactory ..> BaseAnalysisProvider : crea
+OllamaAnalysisProvider --|> BaseAnalysisProvider
+GeminiAnalysisProvider --|> BaseAnalysisProvider
+FakeAnalysisProvider --|> BaseAnalysisProvider
+OllamaAnalysisProvider --> OllamaClient
+GeminiAnalysisProvider --> GeminiClient
+OllamaAnalysisProvider --> AnalysisParser
+GeminiAnalysisProvider --> AnalysisParser
+@enduml

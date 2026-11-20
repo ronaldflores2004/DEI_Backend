@@ -1,0 +1,30 @@
+@startuml 07-secuencia-entrada-audio
+title DEI - Entrada de voz: grabación, transcripción y análisis
+skinparam shadowing false
+autonumber
+
+actor Paciente
+participant "App Flutter\n(record)" as app
+participant "POST /entries/audio" as entries
+participant "POST /analysis/transcriptions/{id}/auto" as trans
+participant "TranscriptionService" as tsvc
+participant "WhisperApiTranscriptionProvider" as wprov
+participant "Servidor Whisper\n(Nitro 5)" as whisper
+participant "POST /analysis/entries/{id}/auto" as analysis
+database PostgreSQL as db
+
+Paciente -> app : graba nota de voz
+app -> entries : multipart (archivo de audio)
+entries -> db : EmotionalEntry(AUDIO, audio_path)
+entries --> app : entrada creada
+app -> trans : transcribir
+trans -> tsvc : generate_transcription(entry_id)
+tsvc -> tsvc : leer archivo de uploads/
+tsvc -> wprov : transcribe(bytes, filename)
+wprov -> whisper : POST /v1/audio/transcriptions\n(file, model, language=es)
+whisper --> wprov : {"text": "..."}
+wprov --> tsvc : texto + "WHISPER:small"
+tsvc -> db : AudioTranscription (texto cifrado)
+trans --> app : transcripción
+app -> analysis : analizar (ver diagrama 05)
+@enduml

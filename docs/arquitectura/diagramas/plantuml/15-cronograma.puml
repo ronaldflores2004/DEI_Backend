@@ -1,0 +1,20 @@
+@startgantt 15-cronograma
+title DEI - Fases e iteraciones del Proceso Unificado (según el historial de commits)
+printscale weekly
+language es
+Project starts 2026-06-01
+-- Inicio --
+[I1 Visión, actores y casos de uso] starts 2026-06-01 and ends 2026-06-12
+-- Elaboración --
+[E1 Identity y Therapy (arquitectura base)] starts 2026-06-08 and ends 2026-06-17
+[E2 Análisis con Gemini, dashboards, sesiones] starts 2026-06-18 and ends 2026-06-22
+-- Construcción --
+[C1 Refactor: repositorios y servicios] starts 2026-06-30 and ends 2026-07-14
+[C2 Providers de IA, enums, logging, seguridad] starts 2026-07-14 and ends 2026-07-25
+[C3 IA local: dei_ai, Faster-Whisper] starts 2026-08-01 and ends 2026-08-05
+[C4 Cadena Ollama-Gemini, Whisper, Alembic] starts 2026-10-20 and ends 2026-11-05
+[C5 Seguridad clínica, admin, recuperación, panel psicólogo] starts 2026-11-01 and ends 2026-11-20
+[C6 App Flutter (3 roles)] starts 2026-11-10 and ends 2026-11-20
+-- Transición --
+[T1 Documentación, pruebas en dispositivo, despliegue] starts 2026-11-20 and ends 2026-12-11
+@endgantt

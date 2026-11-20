@@ -1,0 +1,34 @@
+@startuml 16-analisis-registrar-analizar
+title Análisis - Clases de análisis: CU04/CU05/CU07 Registrar y analizar entrada
+skinparam shadowing false
+left to right direction
+actor Paciente
+boundary "Pantalla\nNueva entrada" as B1
+boundary "Pantalla\nDetalle y análisis" as B2
+control "Gestor de\nentradas" as C1
+control "Gestor de\ntranscripción" as C2
+control "Gestor de\nanálisis" as C3
+control "Evaluador\nde riesgo" as C4
+control "Gestor de\ncrisis" as C5
+entity "Entrada\nemocional" as E1
+entity "Transcripción" as E2
+entity "Análisis\nemocional" as E3
+entity "Alerta\nde riesgo" as E4
+entity "Consentimiento\nde plataforma" as E5
+boundary "Servicio de IA\n(Ollama/Gemini)" as X1
+boundary "Servicio\nWhisper" as X2
+Paciente -- B1
+Paciente -- B2
+B1 -- C1
+C1 -- E1
+C1 -- E5
+B1 -- C2
+C2 -- E2
+C2 -- X2
+B2 -- C3
+C3 -- E3
+C3 -- X1
+C3 -- C4
+C3 -- C5
+C5 -- E4
+@enduml

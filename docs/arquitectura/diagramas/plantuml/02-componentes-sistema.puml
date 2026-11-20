@@ -1,0 +1,63 @@
+@startuml 02-componentes-sistema
+title DEI - Componentes del sistema
+skinparam shadowing false
+skinparam componentStyle uml2
+
+package "App Flutter" {
+  [Presentación\n(pantallas + Riverpod)] as ui
+  [Datos\n(repositorios Dio)] as data
+  [Core\n(DioClient, TokenStorage, Router)] as core
+  ui --> data
+  data --> core
+}
+
+package "dei_backend (FastAPI)" {
+  interface "API REST" as api
+  [Identity\n(auth, perfiles)] as identity
+  [Therapy\n(vínculos, consentimientos)] as therapy
+  [Entries\n(diario)] as entries
+  [Analysis\n(análisis, transcripción, resumen)] as analysis
+  [Recommendations] as recs
+  [Risk Alerts\n(crisis)] as risk
+  [Sessions\n(sesiones, notas)] as sessions
+  [Notifications] as notif
+  [Dashboard / Insights\n(reglas, sin IA)] as dash
+  [Administration\n(usuarios, IA, líneas)] as admin
+  [Audit] as audit
+  [Platform Consents] as pc
+  [Shared AI\n(AIProviderChain)] as chain
+  [Shared Safety\n(filtro de frases)] as safety
+  api - identity
+  analysis --> chain
+  recs --> chain
+  analysis --> safety
+  analysis --> risk : riesgo HIGH/CRITICAL
+  risk --> notif
+  risk --> audit
+  therapy --> audit
+  admin --> chain : cadena de proveedores
+}
+
+package "dei_ai (FastAPI)" {
+  interface "POST /analysis\nPOST /transcription" as aiapi
+  [Analysis service] as aisvc
+  [Transcription service] as trsvc
+  aiapi - aisvc
+  aiapi - trsvc
+}
+
+[Ollama] as ollama
+[Gemini] as gemini
+[Whisper API] as whisper
+database "PostgreSQL" as db
+
+core --> api : HTTPS + JWT
+chain --> ollama
+chain --> gemini
+analysis --> whisper
+aisvc --> ollama
+identity --> db
+entries --> db
+analysis --> db
+chain ..> aiapi : <<planificado>>
+@enduml

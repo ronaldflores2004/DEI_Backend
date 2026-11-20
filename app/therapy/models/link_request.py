@@ -86,3 +86,11 @@ class LinkRequest(Base):
     professional = relationship(
         "ProfessionalProfile"
     )
+
+    @property
+    def patient_first_name(self) -> str | None:
+        return self.patient.first_name if self.patient else None
+
+    @property
+    def patient_last_name(self) -> str | None:
+        return self.patient.last_name if self.patient else None

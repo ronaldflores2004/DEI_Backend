@@ -130,11 +130,11 @@ class LinkRequestService:
         )
 
     @staticmethod
-    def accept_request(
+    def _get_own_pending_request(
         request_id: int,
         professional: ProfessionalProfile,
         db: Session,
-    ) -> dict:
+    ) -> LinkRequest:
 
         request = LinkRequestRepository.get_by_id(
             db=db,
@@ -158,6 +158,45 @@ class LinkRequestService:
                 status_code=400,
                 detail="La solicitud ya fue procesada"
             )
+
+        return request
+
+    @staticmethod
+    def reject_request(
+        request_id: int,
+        professional: ProfessionalProfile,
+        db: Session,
+    ) -> dict:
+
+        request = LinkRequestService._get_own_pending_request(
+            request_id=request_id,
+            professional=professional,
+            db=db
+        )
+
+        request.status = LinkRequestStatusEnum.REJECTED
+
+        LinkRequestRepository.update(
+            db=db,
+            request=request
+        )
+
+        return {
+            "message": "Solicitud rechazada"
+        }
+
+    @staticmethod
+    def accept_request(
+        request_id: int,
+        professional: ProfessionalProfile,
+        db: Session,
+    ) -> dict:
+
+        request = LinkRequestService._get_own_pending_request(
+            request_id=request_id,
+            professional=professional,
+            db=db
+        )
 
         existing_relation = (
             PatientProfessionalRepository.get_active_relation(

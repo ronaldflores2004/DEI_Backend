@@ -154,8 +154,9 @@ Whisper compatible con OpenAI (ver `docs/ia-local.md` del backend). Para que
    `BaseSummaryProvider` y `BaseRecommendationsProvider` ya existen).
 3. Un token de servicio (`X-Service-Token`) para que solo el backend pueda
    llamarlo, y `GET /health` con el estado de Ollama y Whisper.
-4. ~~Alinear las emociones con el backend.~~ Hecho: los dos repos usan las
-   mismas 22 emociones y los mismos sinónimos, con pruebas de contrato.
+4. Emociones: ya alineadas. Los dos repos usan las mismas 22 emociones y los
+   mismos sinónimos, con pruebas de contrato (PR #6 del backend y PR #3 de
+   `dei_ai`).
 5. Mover el `on_event("startup")` obsoleto a `lifespan`.
 
 **En `dei_backend`:**

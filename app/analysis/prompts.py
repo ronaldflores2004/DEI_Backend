@@ -41,6 +41,11 @@ Reglas obligatorias:
 
 primary_emotion: una sola de esta lista, escrita igual:
 {emotions}
+Usa Desesperanza cuando el paciente siente que nada va a
+mejorar o que no hay salida; Desánimo es falta de ánimo o
+motivación sin esa idea. Usa Preocupación para inquietud
+por algo concreto; Ansiedad para nerviosismo o angustia
+más general.
 
 emotion_intensity:
 LOW: la emoción se menciona de paso o es leve.

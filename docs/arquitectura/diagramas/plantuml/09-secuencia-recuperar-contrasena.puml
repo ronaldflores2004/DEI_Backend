@@ -1,0 +1,27 @@
+@startuml 09-secuencia-recuperar-contrasena
+title DEI - Recuperación de contraseña con código de 6 dígitos
+skinparam shadowing false
+autonumber
+actor Usuario
+participant "App Flutter" as app
+participant "auth_router" as r
+participant "PasswordResetService" as s
+database PostgreSQL as db
+participant "SMTP" as smtp
+
+Usuario -> app : correo
+app -> r : POST /auth/forgot-password
+r -> s : request_code (límite por IP y por cuenta)
+s -> db : PasswordResetCode(code_hash, expira 15 min)
+s -> smtp : envía código
+r --> app : respuesta genérica (no revela si existe)
+Usuario -> app : código
+app -> r : POST /auth/verify-reset-code
+r -> s : verificar (máx. 5 intentos)
+r --> app : válido
+Usuario -> app : nueva contraseña
+app -> r : POST /auth/reset-password
+r -> s : cambiar hash, consumir código,\ntoken_version += 1
+s -> db : commit
+r --> app : OK (todas las sesiones cerradas)
+@enduml

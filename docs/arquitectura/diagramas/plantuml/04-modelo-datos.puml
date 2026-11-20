@@ -1,0 +1,253 @@
+@startuml 04-modelo-datos
+!pragma layout smetana
+title DEI - Modelo de datos (PostgreSQL)
+skinparam shadowing false
+hide methods
+hide stereotype
+left to right direction
+package "administration" #FBE9E7 {
+  entity "crisis_lines" as crisis_lines {
+    *id : Integer  <<PK>>
+    --
+     country_code : String(2)
+     city : String(100)
+     name : String(255)
+     phone : String(50)
+     sort_order : Integer
+     is_active : Boolean
+     created_at : DateTime
+     updated_at : DateTime
+  }
+  entity "system_settings" as system_settings {
+    *key : String(100)  <<PK>>
+    --
+     value : String(1000)
+    +updated_by_user_id : Integer  <<FK>>
+     updated_at : DateTime
+  }
+}
+package "analysis" #FFF3E0 {
+  entity "audio_transcriptions" as audio_transcriptions {
+    *id : Integer  <<PK>>
+    --
+    +entry_id : Integer  <<FK, UQ>>
+     transcription_text : EncryptedText  <<cifrado>>
+     provider : String(100)
+     created_at : DateTime
+     updated_at : DateTime
+  }
+  entity "emotional_analyses" as emotional_analyses {
+    *id : Integer  <<PK>>
+    --
+    +entry_id : Integer  <<FK, UQ>>
+     primary_emotion : String(100)
+     emotion_intensity : String(50)
+     risk_level : String(50)
+     provider : String
+     model : String
+     analysis_json : EncryptedJSON  <<cifrado>>
+     analyzed_at : DateTime
+  }
+}
+package "audit" #ECEFF1 {
+  entity "access_audit_logs" as access_audit_logs {
+    *id : Integer  <<PK>>
+    --
+    +professional_id : Integer  <<FK>>
+    +patient_id : Integer  <<FK>>
+     action : String(50)
+     created_at : DateTime
+  }
+}
+package "entries" #FFF8E1 {
+  entity "emotional_entries" as emotional_entries {
+    *id : Integer  <<PK>>
+    --
+    +patient_id : Integer  <<FK>>
+     entry_type : String(20)
+     text_content : EncryptedText  <<cifrado>>
+     audio_path : String(500)
+     is_archived : Boolean
+     created_at : DateTime
+     updated_at : DateTime
+  }
+}
+package "identity" #E3F2FD {
+  entity "password_reset_codes" as password_reset_codes {
+    *id : Integer  <<PK>>
+    --
+    +user_id : Integer  <<FK>>
+     code_hash : String(64)
+     expires_at : DateTime
+     failed_attempts : Integer
+     consumed_at : DateTime
+     requested_ip : String(45)
+     created_at : DateTime
+  }
+  entity "patient_profiles" as patient_profiles {
+    *id : Integer  <<PK>>
+    --
+    +user_id : Integer  <<FK, UQ>>
+     first_name : String(100)
+     last_name : String(100)
+     birth_date : Date
+     gender : String(20)
+     created_at : DateTime
+  }
+  entity "professional_profiles" as professional_profiles {
+    *id : Integer  <<PK>>
+    --
+    +user_id : Integer  <<FK, UQ>>
+     first_name : String(100)
+     last_name : String(100)
+     license_number : String(100)
+     specialties : String(500)
+     is_verified : Boolean
+     verified_by_admin : Integer
+     verified_at : DateTime
+     created_at : DateTime
+  }
+  entity "users" as users {
+    *id : Integer  <<PK>>
+    --
+     email : String(255)  <<UQ>>
+     password_hash : String(255)
+     role : String(50)
+     is_active : Boolean
+     token_version : Integer
+     created_at : DateTime
+     updated_at : DateTime
+  }
+}
+package "notifications" #F1F8E9 {
+  entity "notifications" as notifications {
+    *id : Integer  <<PK>>
+    --
+    +user_id : Integer  <<FK>>
+     title : String(255)
+     message : String(1000)
+     type : String(50)
+     is_read : Boolean
+     created_at : DateTime
+  }
+}
+package "platform_consents" #E8EAF6 {
+  entity "platform_consents" as platform_consents {
+    *id : Integer  <<PK>>
+    --
+    +patient_id : Integer  <<FK>>
+     consent_type : String(50)
+     version : String(20)
+     granted_at : DateTime
+     revoked_at : DateTime
+  }
+}
+package "recommendations" #F3E5F5 {
+  entity "patient_recommendations" as patient_recommendations {
+    *id : Integer  <<PK>>
+    --
+    +patient_id : Integer  <<FK>>
+    +analysis_id : Integer  <<FK>>
+     title : String(255)
+     content : EncryptedText  <<cifrado>>
+     source : String(50)
+     status : String(20)
+    +reviewed_by_professional_id : Integer  <<FK>>
+     reviewed_at : DateTime
+     created_at : DateTime
+  }
+}
+package "risk_alerts" #FFEBEE {
+  entity "risk_alerts" as risk_alerts {
+    *id : Integer  <<PK>>
+    --
+    +patient_id : Integer  <<FK>>
+    +professional_id : Integer  <<FK>>
+    +analysis_id : Integer  <<FK>>
+     risk_level : String(50)
+     status : String(20)
+     created_at : DateTime
+     seen_at : DateTime
+     resolved_at : DateTime
+     resolution_note : String(1000)
+  }
+}
+package "sessions" #E0F7FA {
+  entity "clinical_notes" as clinical_notes {
+    *id : Integer  <<PK>>
+    --
+    +session_id : Integer  <<FK>>
+    +professional_id : Integer  <<FK>>
+     note : EncryptedText  <<cifrado>>
+     created_at : DateTime
+  }
+  entity "therapy_sessions" as therapy_sessions {
+    *id : Integer  <<PK>>
+    --
+    +patient_id : Integer  <<FK>>
+    +professional_id : Integer  <<FK>>
+     session_date : DateTime
+     status : String(20)
+     created_at : DateTime
+  }
+}
+package "therapy" #E8F5E9 {
+  entity "consents" as consents {
+    *id : Integer  <<PK>>
+    --
+    +patient_id : Integer  <<FK>>
+    +professional_id : Integer  <<FK>>
+     granted : Boolean
+     granted_at : DateTime
+     revoked_at : DateTime
+  }
+  entity "link_requests" as link_requests {
+    *id : Integer  <<PK>>
+    --
+    +patient_id : Integer  <<FK>>
+    +professional_id : Integer  <<FK>>
+     status : String(20)
+     sharing_mode : String(50)
+     share_from : DateTime
+     created_at : DateTime
+  }
+  entity "patient_professionals" as patient_professionals {
+    *id : Integer  <<PK>>
+    --
+    +patient_id : Integer  <<FK>>
+    +professional_id : Integer  <<FK>>
+     sharing_mode : String(50)
+     share_from : DateTime
+     active : Boolean
+     created_at : DateTime
+     ended_at : DateTime
+  }
+}
+users |o--o{ system_settings : updated_by_user_id
+emotional_entries ||--o| audio_transcriptions : entry_id
+emotional_entries ||--o| emotional_analyses : entry_id
+professional_profiles ||--o{ access_audit_logs : professional_id
+patient_profiles ||--o{ access_audit_logs : patient_id
+patient_profiles ||--o{ emotional_entries : patient_id
+users ||--o{ password_reset_codes : user_id
+users ||--o| patient_profiles : user_id
+users ||--o| professional_profiles : user_id
+users ||--o{ notifications : user_id
+patient_profiles ||--o{ platform_consents : patient_id
+patient_profiles ||--o{ patient_recommendations : patient_id
+emotional_analyses ||--o{ patient_recommendations : analysis_id
+professional_profiles |o--o{ patient_recommendations : reviewed_by_professional_id
+patient_profiles ||--o{ risk_alerts : patient_id
+professional_profiles ||--o{ risk_alerts : professional_id
+emotional_analyses ||--o{ risk_alerts : analysis_id
+therapy_sessions ||--o{ clinical_notes : session_id
+professional_profiles ||--o{ clinical_notes : professional_id
+patient_profiles ||--o{ therapy_sessions : patient_id
+professional_profiles ||--o{ therapy_sessions : professional_id
+patient_profiles ||--o{ consents : patient_id
+professional_profiles ||--o{ consents : professional_id
+patient_profiles ||--o{ link_requests : patient_id
+professional_profiles ||--o{ link_requests : professional_id
+patient_profiles ||--o{ patient_professionals : patient_id
+professional_profiles ||--o{ patient_professionals : professional_id
+@enduml

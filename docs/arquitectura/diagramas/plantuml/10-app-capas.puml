@@ -1,0 +1,58 @@
+@startuml 10-app-capas
+title App DEI - Arquitectura por features y capas
+skinparam shadowing false
+
+package "core" {
+  class Env {
+    +apiBaseUrl : String
+  }
+  class DioClient {
+    +AuthInterceptor
+    +logs sin cuerpos
+  }
+  class AuthInterceptor {
+    +onRequest() agrega Bearer
+    +onError() 401 => SessionExpiredSignal
+  }
+  class ApiException {
+    +statusCode
+    +detail
+    +retryAfter
+  }
+  class TokenStorage {
+    flutter_secure_storage
+  }
+  class AppRouter {
+    go_router
+    +resolveRedirect(session, location)
+  }
+  class Routes {
+    +homeFor(role)
+    +isAllowed(role, location)
+  }
+}
+
+package "features/<feature>" {
+  package "presentation" {
+    class "XxxScreen" as Screen <<Widget>>
+    class "XxxController" as Controller <<Notifier / AsyncNotifier>>
+  }
+  package "domain" {
+    class "Entidad" as Entity
+    interface "XxxRepository" as Repo
+  }
+  package "data" {
+    class "XxxRepositoryImpl" as RepoImpl
+  }
+}
+
+Screen --> Controller : ref.watch
+Controller --> Repo
+RepoImpl ..|> Repo
+RepoImpl --> DioClient
+RepoImpl ..> ApiException : lanza
+RepoImpl --> Entity : fromJson
+DioClient --> AuthInterceptor
+AuthInterceptor --> TokenStorage
+AppRouter --> Routes
+@enduml

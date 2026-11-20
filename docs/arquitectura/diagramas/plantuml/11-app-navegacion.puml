@@ -1,0 +1,20 @@
+@startuml 11-app-navegacion
+title App DEI - Estado de sesión y redirección por rol
+skinparam shadowing false
+[*] --> unauthenticated
+unauthenticated --> needsProfile : login OK sin perfil
+unauthenticated --> needsConsent : paciente sin consentimiento informado
+unauthenticated --> ready : login OK
+needsProfile --> needsConsent : perfil de paciente creado
+needsProfile --> ready : perfil de psicólogo creado
+needsConsent --> ready : acepta consentimiento
+ready --> unauthenticated : logout o 401
+
+state ready {
+  [*] --> rol
+  state rol <<choice>>
+  rol --> Paciente : PATIENT\n/home /entries /recommendations /settings
+  rol --> Psicologo : PROFESSIONAL\n/pro/...
+  rol --> Admin : ADMIN\n/admin/...
+}
+@enduml

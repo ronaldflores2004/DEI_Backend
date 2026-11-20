@@ -1,0 +1,41 @@
+@startuml 06-secuencia-alerta-crisis
+title DEI - Alerta de crisis y atención del psicólogo
+skinparam shadowing false
+autonumber
+
+participant "CrisisResponseService" as crisis
+participant "AccessPolicyService" as policy
+database PostgreSQL as db
+participant "App (psicólogo)" as app
+actor "Psicólogo" as psi
+participant "risk_alert_router" as router
+participant "RiskAlertTrackingService" as track
+participant "AccessAuditService" as audit
+
+crisis -> db : relaciones activas del paciente
+loop por cada profesional vinculado
+  crisis -> policy : has_active_consent / get_shared_since
+  alt sin consentimiento o entrada no compartida
+    crisis -> crisis : omitir
+  else
+    crisis -> db : crear RiskAlert (NEW)\nsi no existe para análisis+nivel
+    crisis -> db : crear Notification RISK_ALERT\n(sin el texto de la entrada)
+  end
+end
+crisis -> db : commit
+
+psi -> app : abre "Alertas"
+app -> router : GET /risk-alerts/inbox?status=NEW
+router -> track : get_inbox(professional_id)
+track -> audit : log VIEW_RISK_ALERTS
+router --> app : alertas
+psi -> app : abre una alerta
+app -> router : PATCH /risk-alerts/{id}/seen
+router -> track : mark_seen -> SEEN
+track -> audit : log REVIEW_RISK_ALERT
+psi -> app : contacta al paciente y resuelve
+app -> router : PATCH /risk-alerts/{id}/resolve {resolution_note}
+router -> track : resolve -> RESOLVED
+track -> audit : log REVIEW_RISK_ALERT
+router --> app : alerta resuelta
+@enduml

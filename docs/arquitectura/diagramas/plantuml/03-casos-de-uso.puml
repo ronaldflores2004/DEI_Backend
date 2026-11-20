@@ -1,0 +1,72 @@
+@startuml 03-casos-de-uso
+title DEI - Casos de uso
+left to right direction
+skinparam shadowing false
+
+actor Paciente as pac
+actor "Psicólogo" as psi
+actor Administrador as adm
+actor "IA (Ollama / Gemini / Whisper)" as ia
+
+rectangle "DEI" {
+  usecase "Registrarse e iniciar sesión" as UC01
+  usecase "Recuperar contraseña" as UC02
+  usecase "Aceptar consentimientos\n(informado, IA)" as UC03
+  usecase "Escribir entrada de texto" as UC04
+  usecase "Grabar entrada de voz" as UC05
+  usecase "Transcribir audio" as UC06
+  usecase "Analizar entrada con IA" as UC07
+  usecase "Recibir ayuda en crisis" as UC08
+  usecase "Ver resumen semanal" as UC09
+  usecase "Ver recomendaciones" as UC10
+  usecase "Solicitar vínculo con psicólogo" as UC11
+  usecase "Exportar o borrar mis datos" as UC12
+  usecase "Ver quién accedió a mis datos" as UC13
+
+  usecase "Aceptar / rechazar pacientes" as UC20
+  usecase "Ver entradas compartidas" as UC21
+  usecase "Atender alertas de riesgo" as UC22
+  usecase "Revisar recomendaciones de IA" as UC23
+  usecase "Gestionar sesiones y notas" as UC24
+  usecase "Ver insights del paciente" as UC25
+
+  usecase "Verificar psicólogos" as UC30
+  usecase "Activar / desactivar usuarios" as UC31
+  usecase "Configurar cadena de IA" as UC32
+  usecase "Gestionar líneas de crisis" as UC33
+  usecase "Ver estadísticas" as UC34
+}
+
+pac --> UC01
+pac --> UC02
+pac --> UC03
+pac --> UC04
+pac --> UC05
+pac --> UC09
+pac --> UC10
+pac --> UC11
+pac --> UC12
+pac --> UC13
+UC05 ..> UC06 : <<include>>
+UC07 ..> UC04 : <<extend>>
+UC07 ..> UC06 : <<extend>>
+UC08 ..> UC07 : <<extend>>\n[riesgo HIGH/CRITICAL]
+
+psi --> UC01
+psi --> UC20
+psi --> UC21
+psi --> UC22
+psi --> UC23
+psi --> UC24
+psi --> UC25
+
+adm --> UC30
+adm --> UC31
+adm --> UC32
+adm --> UC33
+adm --> UC34
+
+UC06 --> ia
+UC07 --> ia
+UC09 --> ia
+@enduml

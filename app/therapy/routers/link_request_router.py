@@ -84,3 +84,19 @@ def accept_request(
         professional=professional,
         db=db
     )
+
+
+@router.patch("/{request_id}/reject")
+def reject_request(
+    request_id: int,
+    db: Session = Depends(get_db),
+    professional: ProfessionalProfile = Depends(
+        get_current_professional_profile
+    )
+):
+
+    return LinkRequestService.reject_request(
+        request_id=request_id,
+        professional=professional,
+        db=db
+    )

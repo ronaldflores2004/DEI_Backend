@@ -53,6 +53,23 @@ class ProfessionalRepository:
         )
 
     @staticmethod
+    def get_verified(
+        db: Session,
+    ) -> list[ProfessionalProfile]:
+
+        return (
+            db.query(ProfessionalProfile)
+            .filter(
+                ProfessionalProfile.is_verified.is_(True)
+            )
+            .order_by(
+                ProfessionalProfile.last_name,
+                ProfessionalProfile.first_name
+            )
+            .all()
+        )
+
+    @staticmethod
     def get_all(
         db: Session,
     ) -> list[ProfessionalProfile]:

@@ -70,10 +70,12 @@ Respuesta (`AnalysisResponse`):
 }
 ```
 
-- `primary_emotion`: una de 20 emociones (`ALEGRIA`, `TRISTEZA`, `ANSIEDAD`,
+- `primary_emotion`: una de 22 emociones (`ALEGRIA`, `TRISTEZA`, `ANSIEDAD`,
   `MIEDO`, `IRA`, `ASCO`, `SORPRESA`, `CALMA`, `ESTRES`, `DESANIMO`, `CULPA`,
   `VERGUENZA`, `SOLEDAD`, `FRUSTRACION`, `CONFUSION`, `ESPERANZA`, `CONFIANZA`,
-  `GRATITUD`, `AGOTAMIENTO`, `AMOR`).
+  `GRATITUD`, `AGOTAMIENTO`, `AMOR`, `PREOCUPACION`, `DESESPERANZA`). Es el
+  mismo catálogo que `app/shared/emotions.py` del backend; `EmotionEnum.label`
+  da el nombre con tildes que guarda el backend (`Estrés`).
 - `emotion_intensity`: `LOW`, `MEDIUM`, `HIGH`.
 - `risk_level`: `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`.
 
@@ -152,10 +154,9 @@ Whisper compatible con OpenAI (ver `docs/ia-local.md` del backend). Para que
    `BaseSummaryProvider` y `BaseRecommendationsProvider` ya existen).
 3. Un token de servicio (`X-Service-Token`) para que solo el backend pueda
    llamarlo, y `GET /health` con el estado de Ollama y Whisper.
-4. Alinear las emociones con `app/shared/emotions.py` del backend: allí hay 22
-   (las mismas 20 más `Preocupación` y `Desesperanza`) y se guardan con tildes
-   (`Estrés`), mientras `dei_ai` devuelve 20 en mayúsculas sin tildes. El backend
-   ya normaliza variantes, pero las dos emociones que faltan nunca llegarían.
+4. Emociones: ya alineadas. Los dos repos usan las mismas 22 emociones y los
+   mismos sinónimos, con pruebas de contrato (PR #6 del backend y PR #3 de
+   `dei_ai`).
 5. Mover el `on_event("startup")` obsoleto a `lifespan`.
 
 **En `dei_backend`:**

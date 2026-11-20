@@ -118,8 +118,9 @@ Cambios necesarios (detalle en [ia.md](ia.md#6-integración-con-el-backend)):
    y un `DeiAiTranscriptionProvider`, registrados en las fábricas actuales.
 3. Unificar el contrato: `dei_ai` ya responde con los mismos campos que espera el
    backend (`primary_emotion`, `emotion_intensity`, `risk_level`, `provider`,
-   `model`, `analysis_json`); falta alinear la lista de emociones (el backend
-   tiene 22, `dei_ai` 20).
+   `model`, `analysis_json`), y los dos usan el mismo catálogo de 22 emociones
+   con los mismos sinónimos (`dei_ai` las devuelve en mayúsculas sin tildes y
+   el backend las guarda con tildes; pruebas de contrato en ambos repos).
 
 El filtro de frases de riesgo y la decisión final del nivel de riesgo se quedan
 en el backend, sea cual sea el proveedor.

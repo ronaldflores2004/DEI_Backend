@@ -1,0 +1,22 @@
+@startuml 19-comunicacion-analisis
+title Análisis - Diagrama de comunicación: CU07 Analizar entrada con IA
+skinparam shadowing false
+actor Paciente as P
+boundary ":Pantalla detalle" as B
+control ":Gestor de análisis" as CA
+control ":Evaluador de riesgo" as CR
+control ":Gestor de crisis" as CC
+entity ":Entrada" as EE
+entity ":Análisis" as EA
+entity ":Alerta" as AL
+boundary ":Servicio de IA" as IA
+P -right-> B : 1: analizar(entrada)
+B -right-> CA : 2: solicitarAnalisis(id)
+CA -down-> EE : 3: obtenerTexto()
+CA -right-> IA : 4: analizar(texto)
+CA -down-> CR : 5: evaluar(texto, riesgoIA)
+CA -down-> EA : 6: guardar(resultado)
+CA -right-> CC : 7: atender(análisis)
+CC -down-> AL : 7.1 [riesgo ≥ HIGH]: crear()
+B -left-> P : 8: mostrar(resultado, ayuda)
+@enduml

@@ -36,7 +36,7 @@ app/
     email/               Envío SMTP
     enums/, emotions.py  Catálogos compartidos
 alembic/                 Migraciones (única forma de cambiar el esquema)
-tests/                   pytest (66 pruebas, IA simulada)
+tests/                   pytest (88 pruebas, IA simulada)
 docs/                    Guías: base de datos, IA local, seguridad, recuperación
 ```
 

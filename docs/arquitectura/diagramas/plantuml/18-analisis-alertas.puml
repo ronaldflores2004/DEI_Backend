@@ -1,0 +1,25 @@
+@startuml 18-analisis-alertas
+title Análisis - Clases de análisis: CU22 Atender alertas y CU23 Revisar recomendaciones
+skinparam shadowing false
+left to right direction
+actor "Psicólogo" as Psi
+boundary "Pantalla\nAlertas" as B1
+boundary "Pantalla\nRevisar recomendaciones" as B2
+control "Seguimiento\nde alertas" as C1
+control "Revisión de\nrecomendaciones" as C2
+control "Auditoría" as C3
+entity "Alerta\nde riesgo" as E1
+entity "Recomendación" as E2
+entity "Registro\nde acceso" as E3
+entity "Notificación" as E4
+Psi -- B1
+Psi -- B2
+B1 -- C1
+C1 -- E1
+C1 -- C3
+B2 -- C2
+C2 -- E2
+C2 -- C3
+C2 -- E4
+C3 -- E3
+@enduml

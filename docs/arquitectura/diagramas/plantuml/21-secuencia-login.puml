@@ -1,0 +1,36 @@
+@startuml 21-secuencia-login
+title CU01 - Registrarse e iniciar sesión
+skinparam shadowing false
+autonumber
+actor Usuario
+participant "App Flutter\nSessionController" as app
+participant "auth_router" as r
+participant "AuthService" as s
+participant "UserRepository" as repo
+database PostgreSQL as db
+participant "TokenStorage" as ts
+
+Usuario -> app : correo, contraseña, rol
+app -> r : POST /auth/register
+r -> s : register(UserCreate)
+s -> repo : get_by_email
+alt correo ya registrado
+  r --> app : 400
+end
+s -> s : hash_password (bcrypt)
+s -> repo : create(User)
+repo -> db : INSERT users
+r --> app : 201 UserResponse
+Usuario -> app : iniciar sesión
+app -> r : POST /auth/login (form OAuth2)
+r -> s : authenticate
+alt credenciales inválidas o usuario inactivo
+  r --> app : 401
+end
+s -> s : create_access_token(sub, role, token_version)
+r --> app : {access_token, token_type}
+app -> ts : guardar JWT
+app -> r : GET /auth/me
+r --> app : usuario + rol
+app -> app : resolveRedirect(estado, rol)
+@enduml

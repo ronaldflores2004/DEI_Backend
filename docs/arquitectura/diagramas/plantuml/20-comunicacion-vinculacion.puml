@@ -1,0 +1,23 @@
+@startuml 20-comunicacion-vinculacion
+title Análisis - Diagrama de comunicación: CU11/CU20 Vincular paciente y psicólogo
+skinparam shadowing false
+actor Paciente as P
+actor "Psicólogo" as Ps
+boundary ":Mi psicólogo" as B1
+boundary ":Pacientes" as B2
+control ":Gestor de vínculos" as C
+entity ":Perfil profesional" as PP
+entity ":Solicitud" as S
+entity ":Relación" as R
+entity ":Consentimiento" as CO
+P -right-> B1 : 1: elegir(psicólogo, modo)
+B1 -right-> C : 2: solicitar()
+C -down-> PP : 2.1: estaVerificado()
+C -down-> S : 2.2: crear(PENDING)
+Ps -left-> B2 : 3: aceptar(solicitud)
+B2 -left-> C : 4: aceptar()
+C -down-> S : 4.1: marcar(ACCEPTED)
+C -down-> R : 4.2: crear(modo, desde)
+P -down-> B1 : 5: darAcceso()
+B1 -down-> CO : 5.1: crear(granted)
+@enduml

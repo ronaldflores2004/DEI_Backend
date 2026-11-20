@@ -1,0 +1,29 @@
+@startuml 22-secuencia-consentimiento
+title CU03 - Aceptar consentimientos de la plataforma
+skinparam shadowing false
+autonumber
+actor Paciente
+participant "App\n(onboarding/consent)" as app
+participant "platform_consent_router" as r
+participant "PlatformConsentService" as s
+database PostgreSQL as db
+Paciente -> app : primer ingreso
+app -> r : GET /platform-consents/documents
+r --> app : textos y versión vigente
+Paciente -> app : acepta consentimiento informado
+app -> r : POST /platform-consents {INFORMED_CONSENT, versión}
+r -> s : grant()
+alt versión desactualizada
+  r --> app : 400
+end
+s -> db : PlatformConsent(granted_at)
+Paciente -> app : (opcional) acepta procesamiento con IA
+app -> r : POST /platform-consents {AI_PROCESSING, versión}
+s -> db : PlatformConsent
+app -> app : estado = ready
+...más tarde...
+Paciente -> app : revoca IA
+app -> r : PATCH /platform-consents/AI_PROCESSING/revoke
+s -> db : revoked_at = ahora
+note over app, r : Desde aquí, /analysis/.../auto y el resumen con IA\nresponden 403 o se omiten.
+@enduml
